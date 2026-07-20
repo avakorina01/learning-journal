@@ -496,20 +496,14 @@ input[type="checkbox"], input[type="radio"] {
 .text-center { text-align: center; }
 .text-muted { color: var(--text-secondary); }
 
-/* History List */
-.history-section h3 {
-  font-size: 1.25rem;
-  margin-bottom: 16px;
-  color: var(--text-main);
+/* Dashboard Summaries */
+.dashboard-summaries {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.history-item {
+.summary-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -517,26 +511,65 @@ input[type="checkbox"], input[type="radio"] {
   box-shadow: var(--shadow-sm);
 }
 
-.history-item-header {
-  display: flex;
-  justify-content: space-between;
+.summary-card h4 {
+  font-size: 0.85rem;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
 }
 
-.history-item-date {
-  font-weight: 600;
-  color: var(--accent-color);
-}
-
-.history-item-topic {
+.summary-card p {
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-main);
 }
 
-.history-item-content p {
+/* Snapshot Viewer (repurposed from History) */
+.snapshot-viewer {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  margin-top: 24px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.snapshot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.snapshot-date {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.snapshot-section {
+  margin-bottom: 16px;
+}
+
+.snapshot-section:last-child {
+  margin-bottom: 0;
+}
+
+.snapshot-section h4 {
   font-size: 0.9rem;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.snapshot-section p {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  line-height: 1.5;
 }
 
 /* Calendar Styles */
@@ -599,10 +632,22 @@ input[type="checkbox"], input[type="radio"] {
   color: var(--accent-color);
   font-weight: 700;
   border: 1px solid rgba(47, 111, 115, 0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cal-day.has-report:hover {
+  background-color: var(--accent-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  .dashboard-summaries {
+    grid-template-columns: 1fr;
+  }
   :root {
     --sidebar-width: 260px;
   }

@@ -9,9 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnClearAll = document.getElementById('btn-clear-all');
   const btnClearSections = document.querySelectorAll('.btn-clear-section');
   const btnSaveReport = document.getElementById('btn-save-report');
-  const historyContainer = document.getElementById('history-container');
-  const streakCounter = document.getElementById('home-streak-counter'); // Moved to Home
+  const snapshotViewer = document.getElementById('snapshot-viewer');
+  const streakCounter = document.getElementById('home-streak-counter');
   const btnAddReport = document.getElementById('btn-add-report');
+  
+  // Summary Elements
+  const summaryGoal = document.getElementById('summary-goal');
+  const summaryFocus = document.getElementById('summary-focus');
   
   // Calendar Elements
   const calMonthYear = document.getElementById('cal-month-year');
@@ -59,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupHistoryAndStreak();
     setupCalendar();
     populateFormFromData();
+    updateSummaries();
   }
 
   // Navigation Logic
@@ -125,8 +130,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveData();
+        
+        // If learning goal or weekly focus changed, update summaries
+        if (path[0] === 'learningGoal' && path[1] === 'what') updateSummaries();
+        if (path[0] === 'weeklyContract' && path[1] === 'focus') updateSummaries();
       });
     });
+  }
+
+  function updateSummaries() {
+    if (summaryGoal) {
+      summaryGoal.textContent = (journalData.learningGoal && journalData.learningGoal.what) 
+        ? journalData.learningGoal.what 
+        : "No goal set yet.";
+    }
+    if (summaryFocus) {
+      summaryFocus.textContent = (journalData.weeklyContract && journalData.weeklyContract.focus) 
+        ? journalData.weeklyContract.focus 
+        : "No focus set yet.";
+    }
   }
 
   function populateFormFromData() {
@@ -190,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
           clearAllFormInputs();
           populateFormFromData();
           checkProcrastinationStatus();
+          updateSummaries();
         }
       });
     });
@@ -303,13 +326,19 @@ document.addEventListener('DOMContentLoaded', () => {
         journalData.dailyReportsHistory = [];
       }
 
-      // Create snapshot of current daily report
-      const reportSnapshot = { ...journalData.dailyReport };
+      // Create snapshot of all daily activities
+      const reportSnapshot = { 
+        date: dateVal,
+        dailyReport: { ...journalData.dailyReport },
+        tomorrowPlan: { ...journalData.tomorrowPlan },
+        chunkOfDay: { ...journalData.chunkOfDay },
+        antiProcrastination: { ...journalData.antiProcrastination }
+      };
       
       // Check if report for this date already exists and replace it, or push new
       const existingIndex = journalData.dailyReportsHistory.findIndex(r => r.date === dateVal);
       if (existingIndex >= 0) {
-        if(confirm('A report for this date already exists. Overwrite?')) {
+        if(confirm('A Daily Snapshot for this date already exists. Overwrite?')) {
           journalData.dailyReportsHistory[existingIndex] = reportSnapshot;
         } else {
           return;
@@ -318,19 +347,26 @@ document.addEventListener('DOMContentLoaded', () => {
         journalData.dailyReportsHistory.push(reportSnapshot);
       }
 
-      // Clear current form
+      // Clear current forms so user starts fresh tomorrow
       journalData.dailyReport = {};
+      journalData.tomorrowPlan = {};
+      journalData.chunkOfDay = {};
+      journalData.antiProcrastination = {};
       saveData();
       
       // Update UI
       clearSpecificSection('dailyReport');
-      renderHistory();
+      clearSpecificSection('tomorrowPlan');
+      clearSpecificSection('chunkOfDay');
+      clearSpecificSection('antiProcrastination');
+      
       calculateStreak();
       renderCalendar(); // Re-render calendar to show new report
-      alert('Report saved to history!');
+      
+      alert('Daily Snapshot saved!');
+      document.querySelector('.nav-item[data-target="home-dashboard"]').click();
     });
 
-    renderHistory();
     calculateStreak();
   }
 
@@ -347,37 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function renderHistory() {
-    if (!journalData.dailyReportsHistory || journalData.dailyReportsHistory.length === 0) {
-      historyContainer.innerHTML = '<p class="empty-state text-center text-muted">No past reports yet.</p>';
-      return;
-    }
-
-    // Sort by date descending
-    const sortedHistory = [...journalData.dailyReportsHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    historyContainer.innerHTML = '';
-    sortedHistory.forEach(report => {
-      const el = document.createElement('div');
-      el.className = 'history-item';
-      
-      const topicText = report.topic ? report.topic : 'No topic';
-      const focusText = report.focus ? report.focus : '-';
-      const recallText = [report.recall1, report.recall2, report.recall3].filter(Boolean).join(', ');
-
-      el.innerHTML = `
-        <div class="history-item-header">
-          <span class="history-item-date">${report.date}</span>
-          <span class="history-item-topic">${topicText}</span>
-        </div>
-        <div class="history-item-content">
-          <p><strong>Focus:</strong> ${focusText}</p>
-          ${recallText ? `<p><strong>Recall:</strong> ${recallText}</p>` : ''}
-        </div>
-      `;
-      historyContainer.appendChild(el);
-    });
-  }
+  // Remove renderHistory completely, replaced by showSnapshot logic below.
 
   function calculateStreak() {
     if (!journalData.dailyReportsHistory || journalData.dailyReportsHistory.length === 0) {
@@ -485,13 +491,65 @@ document.addEventListener('DOMContentLoaded', () => {
       dayCell.textContent = i;
 
       // Check if this date has a report
-      // Construct date string YYYY-MM-DD
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       if (reportDates.has(dateStr)) {
         dayCell.classList.add('has-report');
+        dayCell.title = "View Snapshot";
+        dayCell.addEventListener('click', () => showSnapshot(dateStr));
       }
 
       calGrid.appendChild(dayCell);
     }
+  }
+
+  function showSnapshot(dateStr) {
+    if (!snapshotViewer) return;
+
+    const snapshot = journalData.dailyReportsHistory.find(r => r.date === dateStr);
+    if (!snapshot) return;
+
+    // Helper to safely get nested data
+    const getSafe = (obj, key) => obj && obj[key] ? obj[key] : '<span class="text-muted">Not filled</span>';
+
+    snapshotViewer.innerHTML = `
+      <div class="snapshot-header">
+        <span class="snapshot-date">${dateStr}</span>
+        <button class="btn-icon" id="close-snapshot">&times;</button>
+      </div>
+
+      <div class="snapshot-section">
+        <h4>Daily Report Topic</h4>
+        <p><strong>Topic:</strong> ${getSafe(snapshot.dailyReport, 'topic')}</p>
+        <p><strong>Focus Mode:</strong> ${getSafe(snapshot.dailyReport, 'focus')}</p>
+        <p><strong>Recall Ideas:</strong> 
+          ${snapshot.dailyReport && snapshot.dailyReport.recall1 ? snapshot.dailyReport.recall1 : ''} 
+          ${snapshot.dailyReport && snapshot.dailyReport.recall2 ? ', ' + snapshot.dailyReport.recall2 : ''} 
+          ${snapshot.dailyReport && snapshot.dailyReport.recall3 ? ', ' + snapshot.dailyReport.recall3 : ''}
+          ${(!snapshot.dailyReport || (!snapshot.dailyReport.recall1 && !snapshot.dailyReport.recall2 && !snapshot.dailyReport.recall3)) ? '<span class="text-muted">None</span>' : ''}
+        </p>
+      </div>
+
+      <div class="snapshot-section">
+        <h4>Chunk of the Day</h4>
+        <p><strong>Chunk:</strong> ${getSafe(snapshot.chunkOfDay, 'chunk')}</p>
+        <p><strong>Explanation:</strong> ${getSafe(snapshot.chunkOfDay, 'explain')}</p>
+      </div>
+
+      <div class="snapshot-section">
+        <h4>Tomorrow Plan</h4>
+        <p><strong>First Task:</strong> ${getSafe(snapshot.tomorrowPlan, 'firstTask')}</p>
+        <p><strong>Task 1:</strong> ${getSafe(snapshot.tomorrowPlan, 'task1')}</p>
+      </div>
+    `;
+
+    snapshotViewer.classList.remove('hidden');
+    
+    // Add close listener
+    document.getElementById('close-snapshot').addEventListener('click', () => {
+      snapshotViewer.classList.add('hidden');
+    });
+    
+    // Smooth scroll to it
+    snapshotViewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 });
