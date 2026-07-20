@@ -8,6 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPrint = document.getElementById('btn-print');
   const btnClearAll = document.getElementById('btn-clear-all');
   const btnClearSections = document.querySelectorAll('.btn-clear-section');
+  const btnSaveReport = document.getElementById('btn-save-report');
+  const historyContainer = document.getElementById('history-container');
+  const streakCounter = document.getElementById('streak-counter');
+  
+  // Pomodoro Elements
+  const pomoTime = document.getElementById('pomodoro-time');
+  const pomoMode = document.getElementById('pomodoro-mode');
+  const btnPomoStart = document.getElementById('pomo-start');
+  const btnPomoPause = document.getElementById('pomo-pause');
+  const btnPomoReset = document.getElementById('pomo-reset');
   
   // Data model binding elements
   const dataElements = document.querySelectorAll('[data-model]');
@@ -20,6 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let journalData = loadData();
 
+  // Pomodoro State
+  let pomoTimer = null;
+  let pomoTimeLeft = 25 * 60; // 25 minutes
+  let pomoIsFocus = true;
+  let pomoIsRunning = false;
+
   // Initialize
   init();
 
@@ -29,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupClearButtons();
     setupPrintButton();
     setupProcrastinationAlert();
+    setupPomodoro();
+    setupHistoryAndStreak();
     populateFormFromData();
   }
 
@@ -196,5 +214,197 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       procrastinationAlert.classList.add('hidden');
     }
+  }
+
+  // Pomodoro Logic
+  function setupPomodoro() {
+    btnPomoStart.addEventListener('click', () => {
+      if (!pomoIsRunning) {
+        pomoIsRunning = true;
+        btnPomoStart.classList.add('hidden');
+        btnPomoPause.classList.remove('hidden');
+        pomoTimer = setInterval(updatePomodoro, 1000);
+      }
+    });
+
+    btnPomoPause.addEventListener('click', () => {
+      if (pomoIsRunning) {
+        pomoIsRunning = false;
+        btnPomoPause.classList.add('hidden');
+        btnPomoStart.classList.remove('hidden');
+        clearInterval(pomoTimer);
+      }
+    });
+
+    btnPomoReset.addEventListener('click', () => {
+      pomoIsRunning = false;
+      clearInterval(pomoTimer);
+      btnPomoPause.classList.add('hidden');
+      btnPomoStart.classList.remove('hidden');
+      pomoIsFocus = true;
+      pomoTimeLeft = 25 * 60;
+      updatePomodoroDisplay();
+      pomoMode.textContent = 'Focus Mode';
+    });
+  }
+
+  function updatePomodoro() {
+    if (pomoTimeLeft > 0) {
+      pomoTimeLeft--;
+      updatePomodoroDisplay();
+    } else {
+      // Switch mode
+      pomoIsFocus = !pomoIsFocus;
+      pomoTimeLeft = pomoIsFocus ? 25 * 60 : 5 * 60;
+      pomoMode.textContent = pomoIsFocus ? 'Focus Mode' : 'Break Time';
+      updatePomodoroDisplay();
+      // Optional: Play a sound here
+      alert(pomoIsFocus ? 'Time to focus!' : 'Time for a break!');
+    }
+  }
+
+  function updatePomodoroDisplay() {
+    const minutes = Math.floor(pomoTimeLeft / 60);
+    const seconds = pomoTimeLeft % 60;
+    pomoTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  // History and Streak Logic
+  function setupHistoryAndStreak() {
+    btnSaveReport.addEventListener('click', () => {
+      const dateVal = document.getElementById('dr-date').value;
+      const topicVal = document.getElementById('dr-topic').value;
+
+      if (!dateVal) {
+        alert('Please enter a date before saving the report.');
+        return;
+      }
+
+      // Ensure history array exists
+      if (!journalData.dailyReportsHistory) {
+        journalData.dailyReportsHistory = [];
+      }
+
+      // Create snapshot of current daily report
+      const reportSnapshot = { ...journalData.dailyReport };
+      
+      // Check if report for this date already exists and replace it, or push new
+      const existingIndex = journalData.dailyReportsHistory.findIndex(r => r.date === dateVal);
+      if (existingIndex >= 0) {
+        if(confirm('A report for this date already exists. Overwrite?')) {
+          journalData.dailyReportsHistory[existingIndex] = reportSnapshot;
+        } else {
+          return;
+        }
+      } else {
+        journalData.dailyReportsHistory.push(reportSnapshot);
+      }
+
+      // Clear current form
+      journalData.dailyReport = {};
+      saveData();
+      
+      // Update UI
+      clearSpecificSection('dailyReport');
+      renderHistory();
+      calculateStreak();
+      alert('Report saved to history!');
+    });
+
+    renderHistory();
+    calculateStreak();
+  }
+
+  function clearSpecificSection(sectionKey) {
+    dataElements.forEach(el => {
+      const path = el.getAttribute('data-model');
+      if (path.startsWith(sectionKey + '.')) {
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = false;
+        } else {
+          el.value = '';
+        }
+      }
+    });
+  }
+
+  function renderHistory() {
+    if (!journalData.dailyReportsHistory || journalData.dailyReportsHistory.length === 0) {
+      historyContainer.innerHTML = '<p class="empty-state text-center text-muted">No past reports yet.</p>';
+      return;
+    }
+
+    // Sort by date descending
+    const sortedHistory = [...journalData.dailyReportsHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    historyContainer.innerHTML = '';
+    sortedHistory.forEach(report => {
+      const el = document.createElement('div');
+      el.className = 'history-item';
+      
+      const topicText = report.topic ? report.topic : 'No topic';
+      const focusText = report.focus ? report.focus : '-';
+      const recallText = [report.recall1, report.recall2, report.recall3].filter(Boolean).join(', ');
+
+      el.innerHTML = `
+        <div class="history-item-header">
+          <span class="history-item-date">${report.date}</span>
+          <span class="history-item-topic">${topicText}</span>
+        </div>
+        <div class="history-item-content">
+          <p><strong>Focus:</strong> ${focusText}</p>
+          ${recallText ? `<p><strong>Recall:</strong> ${recallText}</p>` : ''}
+        </div>
+      `;
+      historyContainer.appendChild(el);
+    });
+  }
+
+  function calculateStreak() {
+    if (!journalData.dailyReportsHistory || journalData.dailyReportsHistory.length === 0) {
+      streakCounter.textContent = '0 Day Streak';
+      return;
+    }
+
+    const dates = journalData.dailyReportsHistory
+      .map(r => r.date)
+      .filter(Boolean)
+      .sort((a, b) => new Date(b) - new Date(a)); // Descending
+
+    if (dates.length === 0) return;
+
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    // Check if latest date is today or yesterday
+    const latestDate = new Date(dates[0]);
+    latestDate.setHours(0,0,0,0);
+    
+    const diffTime = Math.abs(today - latestDate);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 1) {
+      // Streak broken
+      streak = 0;
+    } else {
+      streak = 1;
+      // Count backwards
+      for (let i = 1; i < dates.length; i++) {
+        const d1 = new Date(dates[i-1]);
+        const d2 = new Date(dates[i]);
+        d1.setHours(0,0,0,0);
+        d2.setHours(0,0,0,0);
+        
+        const diff = Math.floor((d1 - d2) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          streak++;
+        } else if (diff > 1) {
+          break; // Gap found
+        }
+      }
+    }
+
+    streakCounter.textContent = `${streak} Day Streak`;
   }
 });

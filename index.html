@@ -26,6 +26,26 @@
         <button class="nav-item" data-target="anti-procrastination">Anti-Procrastination</button>
         <button class="nav-item" data-target="course-ideas">Course Ideas</button>
       </nav>
+
+      <!-- Pomodoro & Streak Widgets -->
+      <div class="sidebar-widgets">
+        <div class="streak-widget">
+          <span class="streak-icon">🔥</span>
+          <span id="streak-counter">0 Day Streak</span>
+        </div>
+        
+        <div class="pomodoro-widget">
+          <div class="pomodoro-header">Focus Timer</div>
+          <div class="pomodoro-time" id="pomodoro-time">25:00</div>
+          <div class="pomodoro-controls">
+            <button id="pomo-start" class="btn-pomo">Start</button>
+            <button id="pomo-pause" class="btn-pomo hidden">Pause</button>
+            <button id="pomo-reset" class="btn-pomo btn-pomo-outline">Reset</button>
+          </div>
+          <div class="pomodoro-mode" id="pomodoro-mode">Focus Mode</div>
+        </div>
+      </div>
+
       <div class="sidebar-footer">
         <button id="btn-print" class="btn btn-secondary">Print / PDF</button>
         <button id="btn-clear-all" class="btn btn-danger">Clear All Data</button>
@@ -221,6 +241,19 @@
               <input type="text" data-model="dailyReport.recall1" placeholder="Idea 1">
               <input type="text" data-model="dailyReport.recall2" placeholder="Idea 2" class="mt-2">
               <input type="text" data-model="dailyReport.recall3" placeholder="Idea 3" class="mt-2">
+            </div>
+
+            <div class="form-actions mt-4">
+              <button id="btn-save-report" class="btn btn-primary w-100">Save & Finish Today's Report</button>
+            </div>
+          </div>
+
+          <!-- History Container -->
+          <div class="history-section mt-4">
+            <h3>Past Reports</h3>
+            <div id="history-container" class="history-list">
+              <!-- History items will be injected here via JS -->
+              <p class="empty-state text-center text-muted">No past reports yet.</p>
             </div>
           </div>
         </section>
