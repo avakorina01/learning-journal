@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
     populateFormFromData();
     renderGoalsList();
     updateSummaries();
+    setupTodaysPlan();
   }
   
   function migrateGoalsData() {
@@ -598,17 +599,37 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryChunk.classList.add('text-empty');
       }
     }
+  }
 
-    if (summaryPlan) {
-      const today = new Date();
+  // Today's Plan Logic
+  function setupTodaysPlan() {
+    const listContainer = document.getElementById('todays-plan-list');
+    const inputTask = document.getElementById('new-task-input');
+    const btnAddTask = document.getElementById('btn-add-task');
+    
+    if (!listContainer) return;
+
+    const today = new Date();
+    const tYear = today.getFullYear();
+    const tMonth = String(today.getMonth() + 1).padStart(2, '0');
+    const tDay = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${tYear}-${tMonth}-${tDay}`;
+
+    if (!journalData.todaysPlan) {
+      journalData.todaysPlan = { date: '', tasks: [] };
+    }
+
+    if (journalData.todaysPlan.date !== todayStr) {
+      // New day! Let's pull from yesterday's snapshot if available
+      journalData.todaysPlan = { date: todayStr, tasks: [] };
+
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      
       const yYear = yesterday.getFullYear();
       const yMonth = String(yesterday.getMonth() + 1).padStart(2, '0');
       const yDay = String(yesterday.getDate()).padStart(2, '0');
       const yesterdayStr = `${yYear}-${yMonth}-${yDay}`;
-      
+
       let foundPlan = null;
       if (journalData.dailyReportsHistory) {
         const yesterdaySnapshot = journalData.dailyReportsHistory.find(r => r.date === yesterdayStr);
@@ -617,20 +638,79 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (foundPlan && (foundPlan.firstTask || foundPlan.task1 || foundPlan.task2 || foundPlan.task3)) {
-        let html = '<ul style="list-style: none; padding: 0; margin: 0; display:flex; flex-direction:column; gap:4px; color:var(--text-main);">';
-        if (foundPlan.firstTask) html += `<li><input type="checkbox"> <strong>[First Task]</strong> ${foundPlan.firstTask}</li>`;
-        if (foundPlan.task1) html += `<li><input type="checkbox"> ${foundPlan.task1}</li>`;
-        if (foundPlan.task2) html += `<li><input type="checkbox"> ${foundPlan.task2}</li>`;
-        if (foundPlan.task3) html += `<li><input type="checkbox"> ${foundPlan.task3}</li>`;
-        html += '</ul>';
-        summaryPlan.innerHTML = html;
-        summaryPlan.classList.remove('text-empty');
-      } else {
-        summaryPlan.innerHTML = 'No plan was written yesterday. Use the Daily Report to plan tomorrow.';
-        summaryPlan.classList.add('text-empty');
+      if (foundPlan) {
+        if (foundPlan.firstTask) journalData.todaysPlan.tasks.push({ id: Date.now() + 1, text: '[First Task] ' + foundPlan.firstTask, done: false });
+        if (foundPlan.task1) journalData.todaysPlan.tasks.push({ id: Date.now() + 2, text: foundPlan.task1, done: false });
+        if (foundPlan.task2) journalData.todaysPlan.tasks.push({ id: Date.now() + 3, text: foundPlan.task2, done: false });
+        if (foundPlan.task3) journalData.todaysPlan.tasks.push({ id: Date.now() + 4, text: foundPlan.task3, done: false });
       }
+      saveData();
     }
+
+    renderTodaysPlan();
+
+    btnAddTask.addEventListener('click', () => {
+      const text = inputTask.value.trim();
+      if (text) {
+        journalData.todaysPlan.tasks.push({ id: Date.now(), text, done: false });
+        saveData();
+        inputTask.value = '';
+        renderTodaysPlan();
+      }
+    });
+
+    inputTask.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        btnAddTask.click();
+      }
+    });
+  }
+
+  function renderTodaysPlan() {
+    const listContainer = document.getElementById('todays-plan-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    if (journalData.todaysPlan.tasks.length === 0) {
+      listContainer.innerHTML = '<li class="text-muted text-empty" style="padding:8px 0;">No tasks for today. Add one above!</li>';
+      return;
+    }
+
+    journalData.todaysPlan.tasks.forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'todo-item';
+      
+      li.innerHTML = `
+        <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${task.done ? 'checked' : ''}>
+        <span class="todo-text ${task.done ? 'completed' : ''}">${task.text}</span>
+        <button class="btn-delete-task" data-id="${task.id}"><i class="fa-solid fa-xmark"></i></button>
+      `;
+
+      listContainer.appendChild(li);
+    });
+
+    // Attach events
+    document.querySelectorAll('.task-checkbox').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const id = parseInt(e.target.getAttribute('data-id'));
+        const task = journalData.todaysPlan.tasks.find(t => t.id === id);
+        if (task) {
+          task.done = e.target.checked;
+          saveData();
+          renderTodaysPlan();
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-delete-task').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseInt(e.currentTarget.getAttribute('data-id'));
+        journalData.todaysPlan.tasks = journalData.todaysPlan.tasks.filter(t => t.id !== id);
+        saveData();
+        renderTodaysPlan();
+      });
+    });
   }
 
   function populateFormFromData() {

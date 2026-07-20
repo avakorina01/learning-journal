@@ -87,7 +87,15 @@
               <div class="dashboard-card-header">
                 <h3><i class="fa-solid fa-list-check"></i> Today's Plan</h3>
               </div>
-              <div id="summary-plan" class="text-muted text-empty">No plan was written yesterday. Use the Daily Report to plan tomorrow.</div>
+              <div class="todays-plan-container">
+                <div class="add-task-form mb-3" style="display:flex; gap:8px;">
+                  <input type="text" id="new-task-input" style="flex:1;" placeholder="Add a new task...">
+                  <button id="btn-add-task" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <ul id="todays-plan-list" class="todo-list" style="list-style: none; padding: 0; margin: 0; display:flex; flex-direction:column; gap:8px;">
+                  <!-- JS will insert list of tasks here -->
+                </ul>
+              </div>
             </div>
             
             <div class="dashboard-card">
