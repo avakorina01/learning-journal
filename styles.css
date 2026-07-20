@@ -511,18 +511,30 @@ input[type="checkbox"], input[type="radio"] {
   box-shadow: var(--shadow-sm);
 }
 
-.summary-card h4 {
+.summary-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.summary-card-header h4 {
   font-size: 0.85rem;
   color: var(--accent-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .summary-card p {
   font-size: 0.95rem;
   font-weight: 500;
   color: var(--text-main);
+}
+
+.btn-edit {
+  padding: 2px 8px;
+  font-size: 0.8rem;
 }
 
 /* Snapshot Viewer (repurposed from History) */

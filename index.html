@@ -69,12 +69,21 @@
 
           <div class="dashboard-summaries mb-4">
             <div class="summary-card">
-              <h4>Current Goal</h4>
+              <div class="summary-card-header">
+                <h4>Current Goal</h4>
+                <button class="btn-text btn-sm btn-edit hidden" id="btn-edit-goal">Edit</button>
+              </div>
               <p id="summary-goal" class="text-muted">No goal set yet.</p>
+              <button class="btn btn-secondary btn-sm mt-2 hidden" id="btn-add-goal">+ Add Goal</button>
             </div>
+            
             <div class="summary-card">
-              <h4>This Week's Focus</h4>
+              <div class="summary-card-header">
+                <h4>This Week's Focus</h4>
+                <button class="btn-text btn-sm btn-edit hidden" id="btn-edit-focus">Edit</button>
+              </div>
               <p id="summary-focus" class="text-muted">No focus set yet.</p>
+              <button class="btn btn-secondary btn-sm mt-2 hidden" id="btn-add-focus">+ Add Focus</button>
             </div>
           </div>
           

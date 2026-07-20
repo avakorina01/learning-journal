@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Summary Elements
   const summaryGoal = document.getElementById('summary-goal');
   const summaryFocus = document.getElementById('summary-focus');
+  const btnAddGoal = document.getElementById('btn-add-goal');
+  const btnEditGoal = document.getElementById('btn-edit-goal');
+  const btnAddFocus = document.getElementById('btn-add-focus');
+  const btnEditFocus = document.getElementById('btn-edit-focus');
   
   // Calendar Elements
   const calMonthYear = document.getElementById('cal-month-year');
@@ -121,6 +125,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.nav-item[data-target="home-dashboard"]').click();
       });
     }
+
+    // Home Dashboard Add/Edit buttons
+    if (btnAddGoal) {
+      btnAddGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
+    }
+    if (btnEditGoal) {
+      btnEditGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
+    }
+    if (btnAddFocus) {
+      btnAddFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
+    }
+    if (btnEditFocus) {
+      btnEditFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
+    }
   }
 
   // Data Binding and Storage
@@ -158,15 +176,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateSummaries() {
+    const hasGoal = journalData.learningGoal && journalData.learningGoal.what;
     if (summaryGoal) {
-      summaryGoal.textContent = (journalData.learningGoal && journalData.learningGoal.what) 
-        ? journalData.learningGoal.what 
-        : "No goal set yet.";
+      if (hasGoal) {
+        summaryGoal.textContent = journalData.learningGoal.what;
+        summaryGoal.classList.remove('hidden');
+        if(btnAddGoal) btnAddGoal.classList.add('hidden');
+        if(btnEditGoal) btnEditGoal.classList.remove('hidden');
+      } else {
+        summaryGoal.classList.add('hidden');
+        if(btnAddGoal) btnAddGoal.classList.remove('hidden');
+        if(btnEditGoal) btnEditGoal.classList.add('hidden');
+      }
     }
+
+    const hasFocus = journalData.weeklyContract && journalData.weeklyContract.focus;
     if (summaryFocus) {
-      summaryFocus.textContent = (journalData.weeklyContract && journalData.weeklyContract.focus) 
-        ? journalData.weeklyContract.focus 
-        : "No focus set yet.";
+      if (hasFocus) {
+        summaryFocus.textContent = journalData.weeklyContract.focus;
+        summaryFocus.classList.remove('hidden');
+        if(btnAddFocus) btnAddFocus.classList.add('hidden');
+        if(btnEditFocus) btnEditFocus.classList.remove('hidden');
+      } else {
+        summaryFocus.classList.add('hidden');
+        if(btnAddFocus) btnAddFocus.classList.remove('hidden');
+        if(btnEditFocus) btnEditFocus.classList.add('hidden');
+      }
     }
   }
 
