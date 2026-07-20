@@ -623,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    streakCounter.textContent = `🔥 ${streak} Day Streak`;
+    streakCounter.innerHTML = `<i class="fa-solid fa-fire"></i> ${streak} Day Streak`;
   }
 
   // Calendar Logic
