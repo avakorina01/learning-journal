@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseModals = document.querySelectorAll('.btn-close-modal, .btn-close-modal-footer');
   const btnOpenWizard = document.getElementById('btn-open-wizard');
   const modalWizard = document.getElementById('modal-wizard');
+  const modalGoal = document.getElementById('modal-goal');
+  
+  // Goals Elements
+  const btnAddNewGoal = document.getElementById('btn-add-new-goal');
+  const goalsListContainer = document.getElementById('goals-list-container');
   
   // Wizard Logic
   let currentWizardStep = 1;
@@ -55,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Data model binding elements
   const dataElements = document.querySelectorAll('[data-model]');
-  const procrastinationRadios = document.querySelectorAll('input[name="procrastination"]');
 
   // Storage Key
   const STORAGE_KEY = 'learningJournalData';
@@ -132,8 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
   init();
 
   function init() {
+    migrateGoalsData();
     setupNavigation();
     setupModals();
+    setupGoalsManager();
     setupWizard();
     setupDataBinding();
     setupClearButtons();
@@ -142,7 +148,29 @@ document.addEventListener('DOMContentLoaded', () => {
     setupHistoryAndStreak();
     setupCalendar();
     populateFormFromData();
+    renderGoalsList();
     updateSummaries();
+  }
+  
+  function migrateGoalsData() {
+    if (!journalData.goals) {
+      journalData.goals = [];
+    }
+    
+    if (journalData.learningGoal && journalData.learningGoal.what) {
+      const newGoal = {
+        id: Date.now().toString(),
+        what: journalData.learningGoal.what || '',
+        why: journalData.learningGoal.why || '',
+        how: journalData.learningGoal.how || '',
+        smallestStep: journalData.learningGoal.smallestStep || '',
+        status: 'active'
+      };
+      journalData.goals.push(newGoal);
+      journalData.activeGoalId = newGoal.id;
+      delete journalData.learningGoal;
+      saveData();
+    }
   }
 
   // Navigation Logic
@@ -173,11 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Modals Logic
   function setupModals() {
-    btnOpenModals.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const modalId = btn.getAttribute('data-modal');
-        document.getElementById(modalId).classList.remove('hidden');
-      });
+    // Open Contract Modal from Dashboard
+    document.querySelector('.btn-edit-modal[data-modal="modal-contract"]').addEventListener('click', () => {
+      document.getElementById('modal-contract').classList.remove('hidden');
     });
 
     btnCloseModals.forEach(btn => {
@@ -186,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Close on overlay click
     modals.forEach(modal => {
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -195,15 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Save buttons in modals
-    if(btnSaveGoal) {
-      btnSaveGoal.addEventListener('click', () => {
-        showToast('Learning Goal saved successfully!');
-        document.getElementById('modal-goal').classList.add('hidden');
-        updateSummaries();
-      });
-    }
-    
     if(btnSaveContract) {
       btnSaveContract.addEventListener('click', () => {
         showToast('Weekly Contract saved successfully!');
@@ -215,9 +231,195 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnSaveProcrastination) {
       btnSaveProcrastination.addEventListener('click', () => {
         showToast('Anti-Procrastination plan saved!');
-        // Keep user on tab, no modal to close here as it's a section
       });
     }
+  }
+  
+  // Goals Manager Logic
+  function setupGoalsManager() {
+    // Edit active goal from Dashboard
+    const btnEditCurrentGoal = document.querySelector('.btn-edit-modal[data-modal="modal-goal"]');
+    if (btnEditCurrentGoal) {
+      btnEditCurrentGoal.addEventListener('click', () => {
+        const activeGoal = getActiveGoal();
+        openGoalModal(activeGoal);
+      });
+    }
+    
+    // Add New Goal from My Goals page
+    if (btnAddNewGoal) {
+      btnAddNewGoal.addEventListener('click', () => {
+        openGoalModal(null); // empty form
+      });
+    }
+    
+    // Save Goal Logic
+    if (btnSaveGoal) {
+      btnSaveGoal.addEventListener('click', () => {
+        const idField = document.getElementById('lg-id');
+        const whatField = document.getElementById('lg-what');
+        const whyField = document.getElementById('lg-why');
+        const howField = document.getElementById('lg-how');
+        const stepField = document.getElementById('lg-smallest-step');
+        
+        if (!whatField.value.trim()) {
+          showToast('Goal title (What) cannot be empty.', 'error');
+          return;
+        }
+        
+        const goalData = {
+          what: whatField.value,
+          why: whyField.value,
+          how: howField.value,
+          smallestStep: stepField.value,
+        };
+        
+        if (idField.value) {
+          // Update existing
+          const goal = journalData.goals.find(g => g.id === idField.value);
+          if (goal) {
+            Object.assign(goal, goalData);
+          }
+        } else {
+          // Create new
+          goalData.id = Date.now().toString();
+          goalData.status = 'active'; // Default new goal to active
+          journalData.goals.push(goalData);
+          journalData.activeGoalId = goalData.id; // Automatically make it active
+        }
+        
+        saveData();
+        showToast('Goal saved successfully!');
+        modalGoal.classList.add('hidden');
+        renderGoalsList();
+        updateSummaries();
+      });
+    }
+  }
+  
+  function getActiveGoal() {
+    if (!journalData.goals) return null;
+    return journalData.goals.find(g => g.id === journalData.activeGoalId) || null;
+  }
+  
+  function openGoalModal(goal) {
+    const idField = document.getElementById('lg-id');
+    const whatField = document.getElementById('lg-what');
+    const whyField = document.getElementById('lg-why');
+    const howField = document.getElementById('lg-how');
+    const stepField = document.getElementById('lg-smallest-step');
+    
+    if (goal) {
+      idField.value = goal.id;
+      whatField.value = goal.what || '';
+      whyField.value = goal.why || '';
+      howField.value = goal.how || '';
+      stepField.value = goal.smallestStep || '';
+    } else {
+      idField.value = '';
+      whatField.value = '';
+      whyField.value = '';
+      howField.value = '';
+      stepField.value = '';
+    }
+    
+    modalGoal.classList.remove('hidden');
+  }
+
+  function renderGoalsList() {
+    if (!goalsListContainer) return;
+    goalsListContainer.innerHTML = '';
+    
+    if (!journalData.goals || journalData.goals.length === 0) {
+      goalsListContainer.innerHTML = '<p class="text-muted text-empty">You have no goals yet. Start by creating one!</p>';
+      return;
+    }
+    
+    // Sort so active goal is on top, then newer ones
+    const sortedGoals = [...journalData.goals].sort((a, b) => {
+      if (a.id === journalData.activeGoalId) return -1;
+      if (b.id === journalData.activeGoalId) return 1;
+      return b.id.localeCompare(a.id); // roughly sort by date desc
+    });
+    
+    sortedGoals.forEach(goal => {
+      const isActive = (goal.id === journalData.activeGoalId && goal.status === 'active');
+      const isCompleted = (goal.status === 'completed');
+      
+      const card = document.createElement('div');
+      card.className = `goal-card ${isActive ? 'active-goal' : (isCompleted ? 'completed-goal' : '')}`;
+      
+      card.innerHTML = `
+        <div class="goal-header">
+          <div class="goal-title">${goal.what}</div>
+          ${isActive ? '<span class="goal-status-badge badge-active"><i class="fa-solid fa-star"></i> Active</span>' : ''}
+          ${isCompleted ? '<span class="goal-status-badge badge-completed"><i class="fa-solid fa-check"></i> Completed</span>' : ''}
+        </div>
+        <div class="goal-details">
+          ${goal.why ? `<p><strong>Why:</strong> ${goal.why}</p>` : ''}
+        </div>
+        <div class="goal-actions">
+          <button class="btn btn-secondary btn-sm action-edit" data-id="${goal.id}"><i class="fa-solid fa-pen"></i> Edit</button>
+          ${isActive ? `<button class="btn btn-success btn-sm action-complete" data-id="${goal.id}"><i class="fa-solid fa-check-double"></i> Complete</button>` : ''}
+          ${!isActive ? `<button class="btn btn-primary btn-sm action-set-active" data-id="${goal.id}">Set as Active</button>` : ''}
+          <button class="btn btn-danger btn-sm action-delete" data-id="${goal.id}"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `;
+      
+      goalsListContainer.appendChild(card);
+    });
+    
+    // Attach event listeners for dynamic buttons
+    document.querySelectorAll('.action-edit').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        const goal = journalData.goals.find(g => g.id === id);
+        if (goal) openGoalModal(goal);
+      });
+    });
+    
+    document.querySelectorAll('.action-complete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        const goal = journalData.goals.find(g => g.id === id);
+        if (goal) {
+          goal.status = 'completed';
+          if (journalData.activeGoalId === id) journalData.activeGoalId = null;
+          saveData();
+          renderGoalsList();
+          updateSummaries();
+          showToast('Amazing! Goal marked as completed!', 'success');
+        }
+      });
+    });
+    
+    document.querySelectorAll('.action-set-active').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        const goal = journalData.goals.find(g => g.id === id);
+        if (goal) {
+          goal.status = 'active';
+          journalData.activeGoalId = id;
+          saveData();
+          renderGoalsList();
+          updateSummaries();
+          showToast('Goal set as active.');
+        }
+      });
+    });
+    
+    document.querySelectorAll('.action-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (confirm('Are you sure you want to delete this goal?')) {
+          const id = e.currentTarget.getAttribute('data-id');
+          journalData.goals = journalData.goals.filter(g => g.id !== id);
+          if (journalData.activeGoalId === id) journalData.activeGoalId = null;
+          saveData();
+          renderGoalsList();
+          updateSummaries();
+        }
+      });
+    });
   }
 
   // Wizard Logic
@@ -362,13 +564,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateSummaries() {
-    const hasGoal = journalData.learningGoal && journalData.learningGoal.what;
+    const activeGoal = getActiveGoal();
     if (summaryGoal) {
-      if (hasGoal) {
-        summaryGoal.textContent = journalData.learningGoal.what;
+      if (activeGoal && activeGoal.what) {
+        summaryGoal.textContent = activeGoal.what;
         summaryGoal.classList.remove('text-empty');
       } else {
-        summaryGoal.textContent = 'No learning goal set yet. Click to define what you want to achieve.';
+        summaryGoal.textContent = 'No active goal set. Go to My Goals to select or create one.';
         summaryGoal.classList.add('text-empty');
       }
     }
@@ -475,6 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSummaries();
         calculateStreak();
         renderCalendar();
+        renderGoalsList();
       }
     });
 

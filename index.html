@@ -20,6 +20,7 @@
       </div>
       <nav class="nav-menu">
         <button class="nav-item active" data-target="home-dashboard"><i class="fa-solid fa-house"></i> Dashboard</button>
+        <button class="nav-item" data-target="my-goals"><i class="fa-solid fa-flag"></i> My Goals</button>
         <button class="nav-item" data-target="anti-procrastination"><i class="fa-solid fa-shield-halved"></i> Anti-Procrastination</button>
         <button class="nav-item" data-target="course-ideas"><i class="fa-solid fa-lightbulb"></i> Course Ideas</button>
       </nav>
@@ -118,6 +119,17 @@
           </div>
         </section>
 
+        <!-- My Goals Page -->
+        <section id="my-goals" class="section">
+          <div class="section-header">
+            <h2>My Goals</h2>
+            <button class="btn btn-primary" id="btn-add-new-goal"><i class="fa-solid fa-plus"></i> Add New Goal</button>
+          </div>
+          <div id="goals-list-container" class="goals-list mt-4">
+            <!-- Goals will be injected here via JS -->
+          </div>
+        </section>
+
         <!-- Anti-Procrastination Page -->
         <section id="anti-procrastination" class="section">
           <div class="section-header">
@@ -205,21 +217,22 @@
         <button class="btn-close-modal">&times;</button>
       </div>
       <div class="modal-body">
+        <input type="hidden" id="lg-id">
         <div class="form-group">
           <label for="lg-what">What do I want to learn?</label>
-          <textarea id="lg-what" data-model="learningGoal.what" rows="2" placeholder="E.g., I want to master basic JavaScript..."></textarea>
+          <textarea id="lg-what" rows="2" placeholder="E.g., I want to master basic JavaScript..."></textarea>
         </div>
         <div class="form-group">
           <label for="lg-why">Why is this important to me?</label>
-          <textarea id="lg-why" data-model="learningGoal.why" rows="2" placeholder="E.g., Because it will help me transition into tech..."></textarea>
+          <textarea id="lg-why" rows="2" placeholder="E.g., Because it will help me transition into tech..."></textarea>
         </div>
         <div class="form-group">
           <label for="lg-how">How will I know I have improved?</label>
-          <textarea id="lg-how" data-model="learningGoal.how" rows="2"></textarea>
+          <textarea id="lg-how" rows="2"></textarea>
         </div>
         <div class="form-group">
           <label for="lg-smallest-step">My smallest learning step</label>
-          <input type="text" id="lg-smallest-step" data-model="learningGoal.smallestStep" placeholder="E.g., Study for 25 minutes daily">
+          <input type="text" id="lg-smallest-step" placeholder="E.g., Study for 25 minutes daily">
         </div>
       </div>
       <div class="modal-footer">
