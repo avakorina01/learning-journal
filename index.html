@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning Journal</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1>Learning Journal</h1>
+        <button id="mobile-menu-close" class="mobile-menu-close" aria-label="Close menu">&times;</button>
+      </div>
+      <nav class="nav-menu">
+        <button class="nav-item active" data-target="learning-goal">Learning Goal</button>
+        <button class="nav-item" data-target="weekly-contract">Weekly Contract</button>
+        <button class="nav-item" data-target="tomorrow-plan">Tomorrow Plan</button>
+        <button class="nav-item" data-target="daily-report">Daily Report</button>
+        <button class="nav-item" data-target="chunk-of-day">Chunk of the Day</button>
+        <button class="nav-item" data-target="anti-procrastination">Anti-Procrastination</button>
+        <button class="nav-item" data-target="course-ideas">Course Ideas</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="btn-print" class="btn btn-secondary">Print / PDF</button>
+        <button id="btn-clear-all" class="btn btn-danger">Clear All Data</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="mobile-header">
+        <button id="mobile-menu-open" class="mobile-menu-open" aria-label="Open menu">&#9776;</button>
+        <h2>Learning Journal</h2>
+      </header>
+
+      <div class="sections-container">
+        
+        <!-- 1. Learning Goal -->
+        <section id="learning-goal" class="section active">
+          <div class="section-header">
+            <h2>Learning Goal</h2>
+            <button class="btn btn-text btn-clear-section" data-section="learningGoal">Clear section</button>
+          </div>
+          <div class="card">
+            <div class="form-group">
+              <label for="lg-what">What do I want to learn?</label>
+              <textarea id="lg-what" data-model="learningGoal.what" rows="2" placeholder="E.g., I want to master basic JavaScript..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="lg-why">Why is this important to me?</label>
+              <textarea id="lg-why" data-model="learningGoal.why" rows="2" placeholder="E.g., Because it will help me transition into tech..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="lg-how">How will I know I have improved?</label>
+              <textarea id="lg-how" data-model="learningGoal.how" rows="2" placeholder="E.g., I will be able to build a simple interactive app..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="lg-difficult">What feels difficult right now?</label>
+              <textarea id="lg-difficult" data-model="learningGoal.difficult" rows="2" placeholder="E.g., Understanding asynchronous code..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="lg-habit">What habit might be holding me back?</label>
+              <textarea id="lg-habit" data-model="learningGoal.habit" rows="2" placeholder="E.g., Giving up when I see an error message..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="lg-smallest-step">My smallest learning step</label>
+              <input type="text" id="lg-smallest-step" data-model="learningGoal.smallestStep" placeholder="E.g., Study for 25 minutes daily">
+            </div>
+            <div class="form-group">
+              <label for="lg-reward">My reward for consistency</label>
+              <input type="text" id="lg-reward" data-model="learningGoal.reward" placeholder="E.g., Watching a movie on Sunday">
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Weekly Learning Contract -->
+        <section id="weekly-contract" class="section">
+          <div class="section-header">
+            <h2>Weekly Learning Contract</h2>
+            <button class="btn btn-text btn-clear-section" data-section="weeklyContract">Clear section</button>
+          </div>
+          <div class="card">
+            <div class="form-group">
+              <label for="wc-studying">This week I am studying:</label>
+              <input type="text" id="wc-studying" data-model="weeklyContract.studying" placeholder="E.g., JavaScript DOM manipulation">
+            </div>
+            
+            <div class="form-group">
+              <label>Study days:</label>
+              <div class="checkbox-group row-layout">
+                <label><input type="checkbox" data-model="weeklyContract.days.mon"> Mon</label>
+                <label><input type="checkbox" data-model="weeklyContract.days.tue"> Tue</label>
+                <label><input type="checkbox" data-model="weeklyContract.days.wed"> Wed</label>
+                <label><input type="checkbox" data-model="weeklyContract.days.thu"> Thu</label>
+                <label><input type="checkbox" data-model="weeklyContract.days.fri"> Fri</label>
+                <label><input type="checkbox" data-model="weeklyContract.days.sat"> Sat</label>
+                <label><input type="checkbox" data-model="weeklyContract.days.sun"> Sun</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="wc-focus">Main focus of the week:</label>
+              <textarea id="wc-focus" data-model="weeklyContract.focus" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>3 key topics:</label>
+              <input type="text" data-model="weeklyContract.topic1" placeholder="Topic 1">
+              <input type="text" data-model="weeklyContract.topic2" placeholder="Topic 2" class="mt-2">
+              <input type="text" data-model="weeklyContract.topic3" placeholder="Topic 3" class="mt-2">
+            </div>
+
+            <div class="form-group">
+              <label>When I will study:</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" data-model="weeklyContract.time.morning"> Morning</label>
+                <label><input type="checkbox" data-model="weeklyContract.time.afternoon"> Afternoon</label>
+                <label><input type="checkbox" data-model="weeklyContract.time.evening"> Evening</label>
+                <label><input type="checkbox" data-model="weeklyContract.time.afterWork"> After work/school</label>
+                <label class="other-checkbox-label">
+                  <input type="checkbox" data-model="weeklyContract.time.otherCheckbox"> Other: 
+                  <input type="text" class="inline-input" data-model="weeklyContract.time.otherText" placeholder="Specify time">
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>What distractions will I remove?</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" data-model="weeklyContract.distractions.phone"> Phone</label>
+                <label><input type="checkbox" data-model="weeklyContract.distractions.social"> Social media</label>
+                <label><input type="checkbox" data-model="weeklyContract.distractions.notifications"> Notifications</label>
+                <label class="other-checkbox-label">
+                  <input type="checkbox" data-model="weeklyContract.distractions.otherCheckbox"> Other: 
+                  <input type="text" class="inline-input" data-model="weeklyContract.distractions.otherText" placeholder="Specify distraction">
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Tomorrow Plan -->
+        <section id="tomorrow-plan" class="section">
+          <div class="section-header">
+            <h2>Tomorrow Plan</h2>
+            <button class="btn btn-text btn-clear-section" data-section="tomorrowPlan">Clear section</button>
+          </div>
+          <div class="card">
+            <h3>To Do</h3>
+            <p class="instruction-text">Write down your plan for tomorrow. It is best to do this before you go to bed. Do not include too many tasks.</p>
+            
+            <div class="form-group tasks-list">
+              <label>Tasks (Max 5):</label>
+              <input type="text" data-model="tomorrowPlan.task1" placeholder="Task 1">
+              <input type="text" data-model="tomorrowPlan.task2" placeholder="Task 2">
+              <input type="text" data-model="tomorrowPlan.task3" placeholder="Task 3">
+              <input type="text" data-model="tomorrowPlan.task4" placeholder="Task 4">
+              <input type="text" data-model="tomorrowPlan.task5" placeholder="Task 5">
+            </div>
+
+            <div class="form-group highlight-box">
+              <label for="tp-first-task">First task I will start with:</label>
+              <input type="text" id="tp-first-task" data-model="tomorrowPlan.firstTask" placeholder="The most important task to tackle first">
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label highlight-checkbox">
+                <input type="checkbox" data-model="tomorrowPlan.writtenBeforeBed"> I wrote this plan before going to bed
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Daily Learning Report -->
+        <section id="daily-report" class="section">
+          <div class="section-header">
+            <h2>Daily Learning Report</h2>
+            <button class="btn btn-text btn-clear-section" data-section="dailyReport">Clear section</button>
+          </div>
+          
+          <div class="card">
+            <div class="form-group row-layout">
+              <div class="flex-1">
+                <label for="dr-date">Date:</label>
+                <input type="date" id="dr-date" data-model="dailyReport.date">
+              </div>
+              <div class="flex-2">
+                <label for="dr-topic">Topic:</label>
+                <input type="text" id="dr-topic" data-model="dailyReport.topic" placeholder="What did you study today?">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="dr-focus">What did I do in Focus Mode?</label>
+              <textarea id="dr-focus" data-model="dailyReport.focus" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="dr-difficult">What felt difficult?</label>
+              <textarea id="dr-difficult" data-model="dailyReport.difficult" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="dr-diffuse">How did I help my brain switch to Diffuse Mode?</label>
+              <textarea id="dr-diffuse" data-model="dailyReport.diffuse" rows="2" placeholder="E.g., Taking a walk, exercising, washing dishes..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="dr-idea">What idea came to mind after the break?</label>
+              <textarea id="dr-idea" data-model="dailyReport.idea" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>3 ideas I can recall on my own:</label>
+              <input type="text" data-model="dailyReport.recall1" placeholder="Idea 1">
+              <input type="text" data-model="dailyReport.recall2" placeholder="Idea 2" class="mt-2">
+              <input type="text" data-model="dailyReport.recall3" placeholder="Idea 3" class="mt-2">
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. Chunk of the Day -->
+        <section id="chunk-of-day" class="section">
+          <div class="section-header">
+            <h2>Chunk of the Day</h2>
+            <button class="btn btn-text btn-clear-section" data-section="chunkOfDay">Clear section</button>
+          </div>
+          
+          <div class="card">
+            <div class="form-group">
+              <label for="cd-chunk">My Chunk of the Day:</label>
+              <input type="text" id="cd-chunk" data-model="chunkOfDay.chunk" placeholder="One core concept you grasped today">
+            </div>
+
+            <div class="form-group">
+              <label for="cd-explain">How would I explain this to a 10-year-old?</label>
+              <p class="instruction-text">Hint: Use metaphors and associations.</p>
+              <textarea id="cd-explain" data-model="chunkOfDay.explain" rows="3"></textarea>
+            </div>
+
+            <div class="form-group scale-group">
+              <label>I think I understand the topic (1 - Not at all, 5 - Perfectly):</label>
+              <div class="radio-scale">
+                <label><input type="radio" name="understanding" value="1" data-model="chunkOfDay.perceived"> 1</label>
+                <label><input type="radio" name="understanding" value="2" data-model="chunkOfDay.perceived"> 2</label>
+                <label><input type="radio" name="understanding" value="3" data-model="chunkOfDay.perceived"> 3</label>
+                <label><input type="radio" name="understanding" value="4" data-model="chunkOfDay.perceived"> 4</label>
+                <label><input type="radio" name="understanding" value="5" data-model="chunkOfDay.perceived"> 5</label>
+              </div>
+            </div>
+
+            <div class="form-group scale-group">
+              <label>I tested my understanding (1 - Failed, 5 - Aced it):</label>
+              <div class="radio-scale">
+                <label><input type="radio" name="tested" value="1" data-model="chunkOfDay.tested"> 1</label>
+                <label><input type="radio" name="tested" value="2" data-model="chunkOfDay.tested"> 2</label>
+                <label><input type="radio" name="tested" value="3" data-model="chunkOfDay.tested"> 3</label>
+                <label><input type="radio" name="tested" value="4" data-model="chunkOfDay.tested"> 4</label>
+                <label><input type="radio" name="tested" value="5" data-model="chunkOfDay.tested"> 5</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cd-check">What else should I check?</label>
+              <input type="text" id="cd-check" data-model="chunkOfDay.checkElse">
+            </div>
+
+            <div class="form-group">
+              <label>Did procrastination get in the way today?</label>
+              <div class="radio-group row-layout">
+                <label><input type="radio" name="procrastination" value="yes" data-model="chunkOfDay.procrastination"> Yes</label>
+                <label><input type="radio" name="procrastination" value="no" data-model="chunkOfDay.procrastination"> No</label>
+              </div>
+              <div id="procrastination-alert" class="alert-box hidden mt-2">
+                <p>Consider filling out the Anti-Procrastination Page.</p>
+                <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-target=\'anti-procrastination\']').click()">Go to Anti-Procrastination</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. Anti-Procrastination Page -->
+        <section id="anti-procrastination" class="section">
+          <div class="section-header">
+            <h2>Anti-Procrastination Page</h2>
+            <button class="btn btn-text btn-clear-section" data-section="antiProcrastination">Clear section</button>
+          </div>
+          
+          <div class="card">
+            <div class="form-group">
+              <label for="ap-task">A task I keep putting off:</label>
+              <input type="text" id="ap-task" data-model="antiProcrastination.task">
+            </div>
+
+            <div class="form-group">
+              <label>How do I feel before starting?</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" data-model="antiProcrastination.feelings.boredom"> Boredom</label>
+                <label><input type="checkbox" data-model="antiProcrastination.feelings.anxiety"> Anxiety</label>
+                <label><input type="checkbox" data-model="antiProcrastination.feelings.fatigue"> Fatigue</label>
+                <label><input type="checkbox" data-model="antiProcrastination.feelings.fear"> Fear of making a mistake</label>
+                <label><input type="checkbox" data-model="antiProcrastination.feelings.irritation"> Irritation</label>
+                <label><input type="checkbox" data-model="antiProcrastination.feelings.uncertainty"> Uncertainty</label>
+                <label class="other-checkbox-label">
+                  <input type="checkbox" data-model="antiProcrastination.feelings.otherCheckbox"> Other: 
+                  <input type="text" class="inline-input" data-model="antiProcrastination.feelings.otherText" placeholder="Specify feeling">
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="ap-trigger">My trigger:</label>
+              <textarea id="ap-trigger" data-model="antiProcrastination.trigger" rows="2" placeholder="What usually causes me to procrastinate? (e.g., getting a notification, feeling overwhelmed)"></textarea>
+            </div>
+
+            <div class="form-group highlight-box">
+              <label for="ap-process">A new 10–25 minute process step:</label>
+              <input type="text" id="ap-process" data-model="antiProcrastination.process" placeholder="Focus on the process, not the product">
+            </div>
+
+            <div class="form-group">
+              <label for="ap-first">What will I do first?</label>
+              <input type="text" id="ap-first" data-model="antiProcrastination.first">
+            </div>
+
+            <div class="form-group">
+              <label for="ap-reward">Reward:</label>
+              <input type="text" id="ap-reward" data-model="antiProcrastination.reward" placeholder="How will I reward myself after the process?">
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. Course Ideas Behind This Journal -->
+        <section id="course-ideas" class="section">
+          <div class="section-header">
+            <h2>Course Ideas Behind This Journal</h2>
+          </div>
+          
+          <div class="card">
+            <p class="instruction-text mb-4">This journal is based on the concepts from the <em>Learning How to Learn</em> course. Here is how it applies the theory to practice:</p>
+            
+            <div class="table-responsive">
+              <table class="ideas-table">
+                <thead>
+                  <tr>
+                    <th>Course idea</th>
+                    <th>How this journal uses it</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Focused Mode</strong></td>
+                    <td>The Daily Learning Report asks what the learner did during focused work.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Diffuse Mode</strong></td>
+                    <td>The journal asks how the learner switched attention after focused work.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Recall</strong></td>
+                    <td>The learner writes three ideas they can recall without notes.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Chunking</strong></td>
+                    <td>The learner creates one “chunk of the day”.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Process over Product</strong></td>
+                    <td>The learner plans small 10–25 minute process steps.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Procrastination</strong></td>
+                    <td>The Anti-Procrastination Page helps identify feelings, triggers, and a next action.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Motivation and Reward</strong></td>
+                    <td>The journal includes rewards for consistency and completed study steps.</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Illusions of Competence</strong></td>
+                    <td>The learner compares perceived understanding with tested understanding.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
