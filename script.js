@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const streakCounter = document.getElementById('home-streak-counter');
   const btnAddReport = document.getElementById('btn-add-report');
   
+  // Specific Save Buttons
+  const btnSaveGoal = document.getElementById('btn-save-goal');
+  const btnSaveContract = document.getElementById('btn-save-contract');
+
   // Summary Elements
   const summaryGoal = document.getElementById('summary-goal');
   const summaryFocus = document.getElementById('summary-focus');
@@ -100,6 +104,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnAddReport) {
       btnAddReport.addEventListener('click', () => {
         document.querySelector('.nav-item[data-target="daily-report"]').click();
+      });
+    }
+
+    // UX Save buttons (they just show an alert and go home, since auto-save handles the data)
+    if (btnSaveGoal) {
+      btnSaveGoal.addEventListener('click', () => {
+        alert('Learning Goal saved successfully!');
+        document.querySelector('.nav-item[data-target="home-dashboard"]').click();
+      });
+    }
+
+    if (btnSaveContract) {
+      btnSaveContract.addEventListener('click', () => {
+        alert('Weekly Contract saved successfully!');
+        document.querySelector('.nav-item[data-target="home-dashboard"]').click();
       });
     }
   }
