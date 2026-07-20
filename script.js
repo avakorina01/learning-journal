@@ -8,29 +8,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPrint = document.getElementById('btn-print');
   const btnClearAll = document.getElementById('btn-clear-all');
   const btnClearSections = document.querySelectorAll('.btn-clear-section');
-  const btnSaveReport = document.getElementById('btn-save-report');
-  const snapshotViewer = document.getElementById('snapshot-viewer');
-  const streakCounter = document.getElementById('home-streak-counter');
-  const btnAddReport = document.getElementById('btn-add-report');
   
-  // Summary Elements
+  const streakCounter = document.getElementById('home-streak-counter');
+  
+  // Dashboard Summaries
   const summaryGoal = document.getElementById('summary-goal');
   const summaryFocus = document.getElementById('summary-focus');
   const summaryPlan = document.getElementById('summary-plan');
   const summaryChunk = document.getElementById('summary-chunk');
   
-  const btnAddGoal = document.getElementById('btn-add-goal');
-  const btnEditGoal = document.getElementById('btn-edit-goal');
-  const btnAddFocus = document.getElementById('btn-add-focus');
-  const btnEditFocus = document.getElementById('btn-edit-focus');
-  const btnAddChunk = document.getElementById('btn-add-chunk');
-  const btnEditChunk = document.getElementById('btn-edit-chunk');
-
-  // Specific Save Buttons
+  // Modals
+  const modals = document.querySelectorAll('.modal-overlay');
+  const btnOpenModals = document.querySelectorAll('.btn-edit-modal');
+  const btnCloseModals = document.querySelectorAll('.btn-close-modal, .btn-close-modal-footer');
+  const btnOpenWizard = document.getElementById('btn-open-wizard');
+  const modalWizard = document.getElementById('modal-wizard');
+  
+  // Wizard Logic
+  let currentWizardStep = 1;
+  const totalWizardSteps = 3;
+  const btnWizPrev = document.getElementById('btn-wiz-prev');
+  const btnWizNext = document.getElementById('btn-wiz-next');
+  const btnSaveReport = document.getElementById('btn-save-report');
+  const wizSteps = document.querySelectorAll('.wizard-step');
+  const wizIndicators = document.querySelectorAll('.step-indicator');
+  const wizProgressBar = document.getElementById('wizard-progress-fill');
+  
+  // Modal Save Buttons
   const btnSaveGoal = document.getElementById('btn-save-goal');
   const btnSaveContract = document.getElementById('btn-save-contract');
-  const btnSavePlan = document.getElementById('btn-save-plan');
-  const btnSaveChunk = document.getElementById('btn-save-chunk');
   const btnSaveProcrastination = document.getElementById('btn-save-procrastination');
   
   // Calendar Elements
@@ -38,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const calGrid = document.getElementById('calendar-grid');
   const btnCalPrev = document.getElementById('cal-prev');
   const btnCalNext = document.getElementById('cal-next');
+  const snapshotViewer = document.getElementById('snapshot-viewer');
 
   // Pomodoro Elements
   const pomoTime = document.getElementById('pomodoro-time');
@@ -49,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Data model binding elements
   const dataElements = document.querySelectorAll('[data-model]');
   const procrastinationRadios = document.querySelectorAll('input[name="procrastination"]');
-  const procrastinationAlert = document.getElementById('procrastination-alert');
 
   // Storage Key
   const STORAGE_KEY = 'learningJournalData';
@@ -59,16 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Pomodoro State
   let pomoTimer = null;
-  let pomoTimeLeft = 25 * 60; // 25 minutes
+  let pomoTimeLeft = 25 * 60;
   let pomoIsFocus = true;
   let pomoIsRunning = false;
+  let audioCtx;
 
   // Calendar State
   let currentCalDate = new Date();
   
-  // Audio Context for Pomodoro
-  let audioCtx;
-
   // Toast Function
   function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -123,16 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }
-  
+
   // Initialize
   init();
 
   function init() {
     setupNavigation();
+    setupModals();
+    setupWizard();
     setupDataBinding();
     setupClearButtons();
     setupPrintButton();
-    setupProcrastinationAlert();
     setupPomodoro();
     setupHistoryAndStreak();
     setupCalendar();
@@ -142,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Navigation Logic
   function setupNavigation() {
-    // Mobile menu toggle
     mobileMenuOpen.addEventListener('click', () => {
       sidebar.classList.add('open');
     });
@@ -151,55 +155,181 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebar.classList.remove('open');
     });
 
-    // Tab switching
     navItems.forEach(item => {
       item.addEventListener('click', () => {
-        // Remove active class from all items and sections
         navItems.forEach(nav => nav.classList.remove('active'));
         sections.forEach(sec => sec.classList.remove('active'));
 
-        // Add active class to clicked item and corresponding section
         item.classList.add('active');
         const targetId = item.getAttribute('data-target');
         document.getElementById(targetId).classList.add('active');
 
-        // Close mobile menu on select
         if (window.innerWidth <= 768) {
           sidebar.classList.remove('open');
         }
       });
     });
+  }
 
-    // Home Dashboard specific navigation
-    if (btnAddReport) {
-      btnAddReport.addEventListener('click', () => {
-        document.querySelector('.nav-item[data-target="daily-report"]').click();
+  // Modals Logic
+  function setupModals() {
+    btnOpenModals.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modalId = btn.getAttribute('data-modal');
+        document.getElementById(modalId).classList.remove('hidden');
+      });
+    });
+
+    btnCloseModals.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.target.closest('.modal-overlay').classList.add('hidden');
+      });
+    });
+
+    // Close on overlay click
+    modals.forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+        }
+      });
+    });
+
+    // Save buttons in modals
+    if(btnSaveGoal) {
+      btnSaveGoal.addEventListener('click', () => {
+        showToast('Learning Goal saved successfully!');
+        document.getElementById('modal-goal').classList.add('hidden');
+        updateSummaries();
+      });
+    }
+    
+    if(btnSaveContract) {
+      btnSaveContract.addEventListener('click', () => {
+        showToast('Weekly Contract saved successfully!');
+        document.getElementById('modal-contract').classList.add('hidden');
+        updateSummaries();
       });
     }
 
-    // UX Save buttons
-    const setupUxSave = (btn, msg) => {
-      if(btn) {
-        btn.addEventListener('click', () => {
-          showToast(msg);
-          document.querySelector('.nav-item[data-target="home-dashboard"]').click();
-        });
+    if(btnSaveProcrastination) {
+      btnSaveProcrastination.addEventListener('click', () => {
+        showToast('Anti-Procrastination plan saved!');
+        // Keep user on tab, no modal to close here as it's a section
+      });
+    }
+  }
+
+  // Wizard Logic
+  function setupWizard() {
+    if (!btnOpenWizard) return;
+    
+    btnOpenWizard.addEventListener('click', () => {
+      currentWizardStep = 1;
+      updateWizardUI();
+      modalWizard.classList.remove('hidden');
+    });
+
+    btnWizNext.addEventListener('click', () => {
+      if (currentWizardStep < totalWizardSteps) {
+        currentWizardStep++;
+        updateWizardUI();
       }
-    };
+    });
 
-    setupUxSave(btnSaveGoal, 'Learning Goal saved successfully!');
-    setupUxSave(btnSaveContract, 'Weekly Contract saved successfully!');
-    setupUxSave(btnSavePlan, 'Tomorrow Plan saved successfully!');
-    setupUxSave(btnSaveChunk, 'Chunk of the Day saved successfully!');
-    setupUxSave(btnSaveProcrastination, 'Anti-Procrastination plan saved successfully!');
+    btnWizPrev.addEventListener('click', () => {
+      if (currentWizardStep > 1) {
+        currentWizardStep--;
+        updateWizardUI();
+      }
+    });
 
-    // Home Dashboard Add/Edit buttons
-    if (btnAddGoal) btnAddGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
-    if (btnEditGoal) btnEditGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
-    if (btnAddFocus) btnAddFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
-    if (btnEditFocus) btnEditFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
-    if (btnAddChunk) btnAddChunk.addEventListener('click', () => document.querySelector('.nav-item[data-target="chunk-of-day"]').click());
-    if (btnEditChunk) btnEditChunk.addEventListener('click', () => document.querySelector('.nav-item[data-target="chunk-of-day"]').click());
+    btnSaveReport.addEventListener('click', () => {
+      const dateVal = document.getElementById('dr-date').value;
+      if (!dateVal) {
+        showToast('Please enter a date before saving the report.', 'error');
+        return;
+      }
+
+      if (!journalData.dailyReportsHistory) {
+        journalData.dailyReportsHistory = [];
+      }
+
+      const reportSnapshot = { 
+        date: dateVal,
+        dailyReport: { ...journalData.dailyReport },
+        tomorrowPlan: { ...journalData.tomorrowPlan },
+        chunkOfDay: { ...journalData.chunkOfDay },
+        antiProcrastination: { ...journalData.antiProcrastination }
+      };
+      
+      const existingIndex = journalData.dailyReportsHistory.findIndex(r => r.date === dateVal);
+      if (existingIndex >= 0) {
+        if(confirm('A Daily Snapshot for this date already exists. Overwrite?')) {
+          journalData.dailyReportsHistory[existingIndex] = reportSnapshot;
+        } else {
+          return;
+        }
+      } else {
+        journalData.dailyReportsHistory.push(reportSnapshot);
+      }
+
+      // Clear wizard forms
+      journalData.dailyReport = {};
+      journalData.tomorrowPlan = {};
+      journalData.chunkOfDay = {};
+      saveData();
+      clearSpecificSection('dailyReport');
+      clearSpecificSection('tomorrowPlan');
+      clearSpecificSection('chunkOfDay');
+      
+      calculateStreak();
+      renderCalendar();
+      updateSummaries();
+      
+      showToast('Daily Snapshot saved! Great job!');
+      modalWizard.classList.add('hidden');
+    });
+  }
+
+  function updateWizardUI() {
+    // Update steps
+    wizSteps.forEach((step, index) => {
+      if (index + 1 === currentWizardStep) {
+        step.classList.add('active');
+        step.classList.remove('hidden');
+      } else {
+        step.classList.remove('active');
+        step.classList.add('hidden');
+      }
+    });
+
+    // Update indicators
+    wizIndicators.forEach((ind, index) => {
+      if (index + 1 === currentWizardStep) {
+        ind.classList.add('active');
+      } else {
+        ind.classList.remove('active');
+      }
+    });
+
+    // Update progress bar
+    wizProgressBar.style.width = `${(currentWizardStep / totalWizardSteps) * 100}%`;
+
+    // Update buttons
+    if (currentWizardStep === 1) {
+      btnWizPrev.classList.add('hidden');
+    } else {
+      btnWizPrev.classList.remove('hidden');
+    }
+
+    if (currentWizardStep === totalWizardSteps) {
+      btnWizNext.classList.add('hidden');
+      btnSaveReport.classList.remove('hidden');
+    } else {
+      btnWizNext.classList.remove('hidden');
+      btnSaveReport.classList.add('hidden');
+    }
   }
 
   // Data Binding and Storage
@@ -209,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const path = e.target.getAttribute('data-model').split('.');
         let current = journalData;
         
-        // Traverse path to set value
         for (let i = 0; i < path.length - 1; i++) {
           if (!current[path[i]]) current[path[i]] = {};
           current = current[path[i]];
@@ -228,11 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveData();
-        
-        // If key sections changed, update summaries
-        if (path[0] === 'learningGoal' && path[1] === 'what') updateSummaries();
-        if (path[0] === 'weeklyContract' && path[1] === 'focus') updateSummaries();
-        if (path[0] === 'chunkOfDay' && path[1] === 'chunk') updateSummaries();
       });
     });
   }
@@ -242,13 +366,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (summaryGoal) {
       if (hasGoal) {
         summaryGoal.textContent = journalData.learningGoal.what;
-        summaryGoal.classList.remove('hidden');
-        if(btnAddGoal) btnAddGoal.classList.add('hidden');
-        if(btnEditGoal) btnEditGoal.classList.remove('hidden');
+        summaryGoal.classList.remove('text-empty');
       } else {
-        summaryGoal.classList.add('hidden');
-        if(btnAddGoal) btnAddGoal.classList.remove('hidden');
-        if(btnEditGoal) btnEditGoal.classList.add('hidden');
+        summaryGoal.textContent = 'No learning goal set yet. Click to define what you want to achieve.';
+        summaryGoal.classList.add('text-empty');
       }
     }
 
@@ -256,32 +377,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (summaryFocus) {
       if (hasFocus) {
         summaryFocus.textContent = journalData.weeklyContract.focus;
-        summaryFocus.classList.remove('hidden');
-        if(btnAddFocus) btnAddFocus.classList.add('hidden');
-        if(btnEditFocus) btnEditFocus.classList.remove('hidden');
+        summaryFocus.classList.remove('text-empty');
       } else {
-        summaryFocus.classList.add('hidden');
-        if(btnAddFocus) btnAddFocus.classList.remove('hidden');
-        if(btnEditFocus) btnEditFocus.classList.add('hidden');
+        summaryFocus.textContent = 'No focus set for this week. Click to plan your study sessions.';
+        summaryFocus.classList.add('text-empty');
       }
     }
 
-    // Today's Chunk
     const hasChunk = journalData.chunkOfDay && journalData.chunkOfDay.chunk;
     if (summaryChunk) {
       if (hasChunk) {
         summaryChunk.textContent = journalData.chunkOfDay.chunk;
-        summaryChunk.classList.remove('hidden');
-        if(btnAddChunk) btnAddChunk.classList.add('hidden');
-        if(btnEditChunk) btnEditChunk.classList.remove('hidden');
+        summaryChunk.classList.remove('text-empty');
       } else {
-        summaryChunk.classList.add('hidden');
-        if(btnAddChunk) btnAddChunk.classList.remove('hidden');
-        if(btnEditChunk) btnEditChunk.classList.add('hidden');
+        summaryChunk.textContent = 'No chunk defined for today yet. It will appear here after your Daily Report.';
+        summaryChunk.classList.add('text-empty');
       }
     }
 
-    // Today's Plan (From Yesterday's Tomorrow Plan)
     if (summaryPlan) {
       const today = new Date();
       const yesterday = new Date(today);
@@ -308,10 +421,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (foundPlan.task3) html += `<li><input type="checkbox"> ${foundPlan.task3}</li>`;
         html += '</ul>';
         summaryPlan.innerHTML = html;
-        summaryPlan.classList.remove('text-muted');
+        summaryPlan.classList.remove('text-empty');
       } else {
-        summaryPlan.innerHTML = 'No plan was written yesterday.';
-        summaryPlan.classList.add('text-muted');
+        summaryPlan.innerHTML = 'No plan was written yesterday. Use the Daily Report to plan tomorrow.';
+        summaryPlan.classList.add('text-empty');
       }
     }
   }
@@ -341,9 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
-
-    // Trigger specific UI updates based on loaded data
-    checkProcrastinationStatus();
   }
 
   function loadData() {
@@ -362,7 +472,9 @@ document.addEventListener('DOMContentLoaded', () => {
         journalData = {};
         saveData();
         clearAllFormInputs();
-        checkProcrastinationStatus();
+        updateSummaries();
+        calculateStreak();
+        renderCalendar();
       }
     });
 
@@ -372,12 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('Are you sure you want to clear this section?')) {
           journalData[sectionKey] = {};
           saveData();
-          
-          // Re-populate form to clear just this section
-          clearAllFormInputs();
-          populateFormFromData();
-          checkProcrastinationStatus();
-          updateSummaries();
+          clearSpecificSection(sectionKey);
         }
       });
     });
@@ -392,6 +499,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  
+  function clearSpecificSection(sectionKey) {
+    dataElements.forEach(el => {
+      const path = el.getAttribute('data-model');
+      if (path.startsWith(sectionKey + '.')) {
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = false;
+        } else {
+          el.value = '';
+        }
+      }
+    });
+  }
 
   // Print
   function setupPrintButton() {
@@ -400,33 +520,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // UI specific logic
-  function setupProcrastinationAlert() {
-    procrastinationRadios.forEach(radio => {
-      radio.addEventListener('change', checkProcrastinationStatus);
-    });
-  }
-
-  function checkProcrastinationStatus() {
-    let show = false;
-    procrastinationRadios.forEach(radio => {
-      if (radio.checked && radio.value === 'yes') {
-        show = true;
-      }
-    });
-    
-    if (show) {
-      procrastinationAlert.classList.remove('hidden');
-    } else {
-      procrastinationAlert.classList.add('hidden');
-    }
-  }
-
   // Pomodoro Logic
   function setupPomodoro() {
     btnPomoStart.addEventListener('click', () => {
       if (!pomoIsRunning) {
-        // Request notification permission on first start
         if (Notification.permission !== "granted" && Notification.permission !== "denied") {
           Notification.requestPermission();
         }
@@ -464,7 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
       pomoTimeLeft--;
       updatePomodoroDisplay();
     } else {
-      // Switch mode
       pomoIsFocus = !pomoIsFocus;
       pomoTimeLeft = pomoIsFocus ? 25 * 60 : 5 * 60;
       pomoMode.textContent = pomoIsFocus ? 'Focus Mode' : 'Break Time';
@@ -481,82 +577,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // History and Streak Logic
   function setupHistoryAndStreak() {
-    btnSaveReport.addEventListener('click', () => {
-      const dateVal = document.getElementById('dr-date').value;
-      const topicVal = document.getElementById('dr-topic').value;
-
-      if (!dateVal) {
-        showToast('Please enter a date before saving the report.', 'error');
-        return;
-      }
-
-      // Ensure history array exists
-      if (!journalData.dailyReportsHistory) {
-        journalData.dailyReportsHistory = [];
-      }
-
-      // Create snapshot of all daily activities
-      const reportSnapshot = { 
-        date: dateVal,
-        dailyReport: { ...journalData.dailyReport },
-        tomorrowPlan: { ...journalData.tomorrowPlan },
-        chunkOfDay: { ...journalData.chunkOfDay },
-        antiProcrastination: { ...journalData.antiProcrastination }
-      };
-      
-      // Check if report for this date already exists and replace it, or push new
-      const existingIndex = journalData.dailyReportsHistory.findIndex(r => r.date === dateVal);
-      if (existingIndex >= 0) {
-        if(confirm('A Daily Snapshot for this date already exists. Overwrite?')) {
-          journalData.dailyReportsHistory[existingIndex] = reportSnapshot;
-        } else {
-          return;
-        }
-      } else {
-        journalData.dailyReportsHistory.push(reportSnapshot);
-      }
-
-      // Clear current forms so user starts fresh tomorrow
-      journalData.dailyReport = {};
-      journalData.tomorrowPlan = {};
-      journalData.chunkOfDay = {};
-      journalData.antiProcrastination = {};
-      saveData();
-      
-      // Update UI
-      clearSpecificSection('dailyReport');
-      clearSpecificSection('tomorrowPlan');
-      clearSpecificSection('chunkOfDay');
-      clearSpecificSection('antiProcrastination');
-      
-      calculateStreak();
-      renderCalendar(); // Re-render calendar to show new report
-      
-      showToast('Daily Snapshot saved!');
-      document.querySelector('.nav-item[data-target="home-dashboard"]').click();
-    });
-
     calculateStreak();
   }
 
-  function clearSpecificSection(sectionKey) {
-    dataElements.forEach(el => {
-      const path = el.getAttribute('data-model');
-      if (path.startsWith(sectionKey + '.')) {
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          el.checked = false;
-        } else {
-          el.value = '';
-        }
-      }
-    });
-  }
-
-  // Remove renderHistory completely, replaced by showSnapshot logic below.
-
   function calculateStreak() {
     if (!journalData.dailyReportsHistory || journalData.dailyReportsHistory.length === 0) {
-      streakCounter.textContent = '0 Day Streak';
+      streakCounter.innerHTML = `<i class="fa-solid fa-fire"></i> 0 Day Streak`;
       return;
     }
 
@@ -571,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date();
     today.setHours(0,0,0,0);
     
-    // Get weekly study days. If not set, assume everyday is a study day.
     const studyDays = journalData.weeklyContract?.days || {};
     const noDaysSelected = Object.keys(studyDays).length === 0 || !Object.values(studyDays).includes(true);
     
@@ -594,12 +619,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return `${y}-${m}-${d}`;
     };
     
-    // Check if we already have a report for today
     if (dates.includes(formatDate(currDate))) {
         streak++;
     }
     
-    currDate.setDate(currDate.getDate() - 1); // Move to yesterday
+    currDate.setDate(currDate.getDate() - 1);
 
     while(true) {
         const dateStr = formatDate(currDate);
@@ -607,17 +631,13 @@ document.addEventListener('DOMContentLoaded', () => {
             streak++;
             currDate.setDate(currDate.getDate() - 1);
         } else {
-            // No report on this day
             if (requiredDaysMap[currDate.getDay()]) {
-                // It was a required day and we missed it! Streak broken.
                 break;
             } else {
-                // Not a required day, we can skip it and streak continues.
                 currDate.setDate(currDate.getDate() - 1);
             }
         }
         
-        // Safety break if we went too far back past the first recorded report
         if (new Date(dates[dates.length - 1]) > currDate) {
             break;
         }
@@ -647,9 +667,8 @@ document.addEventListener('DOMContentLoaded', () => {
     calGrid.innerHTML = '';
     
     const year = currentCalDate.getFullYear();
-    const month = currentCalDate.getMonth(); // 0-indexed
+    const month = currentCalDate.getMonth();
     
-    // Set Header text
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     calMonthYear.textContent = `${monthNames[month]} ${year}`;
 
@@ -657,12 +676,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const lastDayOfMonth = new Date(year, month + 1, 0);
     const daysInMonth = lastDayOfMonth.getDate();
     
-    // Get day of week for 1st (0 = Sun, 1 = Mon, etc.)
-    // We want Monday = 0, Sunday = 6
     let startingDay = firstDayOfMonth.getDay() - 1;
     if (startingDay < 0) startingDay = 6;
 
-    // Set of dates that have reports
     const reportDates = new Set();
     if (journalData.dailyReportsHistory) {
       journalData.dailyReportsHistory.forEach(r => {
@@ -670,20 +686,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Empty cells for preceding days
     for (let i = 0; i < startingDay; i++) {
       const emptyCell = document.createElement('div');
       emptyCell.className = 'cal-day empty';
       calGrid.appendChild(emptyCell);
     }
 
-    // Day cells
     for (let i = 1; i <= daysInMonth; i++) {
       const dayCell = document.createElement('div');
       dayCell.className = 'cal-day';
       dayCell.textContent = i;
 
-      // Check if this date has a report
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
       if (reportDates.has(dateStr)) {
         dayCell.classList.add('has-report');
@@ -701,7 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const snapshot = journalData.dailyReportsHistory.find(r => r.date === dateStr);
     if (!snapshot) return;
 
-    // Helper to safely get nested data
     const getSafe = (obj, key) => obj && obj[key] ? obj[key] : '<span class="text-muted">Not filled</span>';
 
     snapshotViewer.innerHTML = `
@@ -737,12 +749,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     snapshotViewer.classList.remove('hidden');
     
-    // Add close listener
     document.getElementById('close-snapshot').addEventListener('click', () => {
       snapshotViewer.classList.add('hidden');
     });
     
-    // Smooth scroll to it
     snapshotViewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 });
