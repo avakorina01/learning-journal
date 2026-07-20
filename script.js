@@ -705,10 +705,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.btn-delete-task').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const id = parseInt(e.currentTarget.getAttribute('data-id'));
-        journalData.todaysPlan.tasks = journalData.todaysPlan.tasks.filter(t => t.id !== id);
-        saveData();
-        renderTodaysPlan();
+        if (confirm('Are you sure you want to delete this task?')) {
+          const id = parseInt(e.currentTarget.getAttribute('data-id'));
+          journalData.todaysPlan.tasks = journalData.todaysPlan.tasks.filter(t => t.id !== id);
+          saveData();
+          renderTodaysPlan();
+        }
       });
     });
   }
