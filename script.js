@@ -76,8 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const toast = document.createElement('div');
     toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+    
+    const iconClass = type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
+    const iconColor = type === 'error' ? 'var(--danger-color)' : 'var(--accent-color)';
+    
     toast.innerHTML = `
-      <span>${type === 'error' ? '⚠️' : '✅'}</span>
+      <i class="${iconClass}" style="color: ${iconColor}; font-size: 1.2rem;"></i>
       <span>${message}</span>
     `;
     
