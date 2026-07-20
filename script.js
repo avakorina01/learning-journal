@@ -13,17 +13,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const streakCounter = document.getElementById('home-streak-counter');
   const btnAddReport = document.getElementById('btn-add-report');
   
-  // Specific Save Buttons
-  const btnSaveGoal = document.getElementById('btn-save-goal');
-  const btnSaveContract = document.getElementById('btn-save-contract');
-
   // Summary Elements
   const summaryGoal = document.getElementById('summary-goal');
   const summaryFocus = document.getElementById('summary-focus');
+  const summaryPlan = document.getElementById('summary-plan');
+  const summaryChunk = document.getElementById('summary-chunk');
+  
   const btnAddGoal = document.getElementById('btn-add-goal');
   const btnEditGoal = document.getElementById('btn-edit-goal');
   const btnAddFocus = document.getElementById('btn-add-focus');
   const btnEditFocus = document.getElementById('btn-edit-focus');
+  const btnAddChunk = document.getElementById('btn-add-chunk');
+  const btnEditChunk = document.getElementById('btn-edit-chunk');
+
+  // Specific Save Buttons
+  const btnSaveGoal = document.getElementById('btn-save-goal');
+  const btnSaveContract = document.getElementById('btn-save-contract');
+  const btnSavePlan = document.getElementById('btn-save-plan');
+  const btnSaveChunk = document.getElementById('btn-save-chunk');
+  const btnSaveProcrastination = document.getElementById('btn-save-procrastination');
   
   // Calendar Elements
   const calMonthYear = document.getElementById('cal-month-year');
@@ -112,33 +120,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // UX Save buttons (they just show an alert and go home, since auto-save handles the data)
-    if (btnSaveGoal) {
-      btnSaveGoal.addEventListener('click', () => {
-        alert('Learning Goal saved successfully!');
-        document.querySelector('.nav-item[data-target="home-dashboard"]').click();
-      });
-    }
+    const setupUxSave = (btn, msg) => {
+      if(btn) {
+        btn.addEventListener('click', () => {
+          alert(msg);
+          document.querySelector('.nav-item[data-target="home-dashboard"]').click();
+        });
+      }
+    };
 
-    if (btnSaveContract) {
-      btnSaveContract.addEventListener('click', () => {
-        alert('Weekly Contract saved successfully!');
-        document.querySelector('.nav-item[data-target="home-dashboard"]').click();
-      });
-    }
+    setupUxSave(btnSaveGoal, 'Learning Goal saved successfully!');
+    setupUxSave(btnSaveContract, 'Weekly Contract saved successfully!');
+    setupUxSave(btnSavePlan, 'Tomorrow Plan saved successfully!');
+    setupUxSave(btnSaveChunk, 'Chunk of the Day saved successfully!');
+    setupUxSave(btnSaveProcrastination, 'Anti-Procrastination plan saved successfully!');
 
     // Home Dashboard Add/Edit buttons
-    if (btnAddGoal) {
-      btnAddGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
-    }
-    if (btnEditGoal) {
-      btnEditGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
-    }
-    if (btnAddFocus) {
-      btnAddFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
-    }
-    if (btnEditFocus) {
-      btnEditFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
-    }
+    if (btnAddGoal) btnAddGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
+    if (btnEditGoal) btnEditGoal.addEventListener('click', () => document.querySelector('.nav-item[data-target="learning-goal"]').click());
+    if (btnAddFocus) btnAddFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
+    if (btnEditFocus) btnEditFocus.addEventListener('click', () => document.querySelector('.nav-item[data-target="weekly-contract"]').click());
+    if (btnAddChunk) btnAddChunk.addEventListener('click', () => document.querySelector('.nav-item[data-target="chunk-of-day"]').click());
+    if (btnEditChunk) btnEditChunk.addEventListener('click', () => document.querySelector('.nav-item[data-target="chunk-of-day"]').click());
   }
 
   // Data Binding and Storage
@@ -168,9 +171,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         saveData();
         
-        // If learning goal or weekly focus changed, update summaries
+        // If key sections changed, update summaries
         if (path[0] === 'learningGoal' && path[1] === 'what') updateSummaries();
         if (path[0] === 'weeklyContract' && path[1] === 'focus') updateSummaries();
+        if (path[0] === 'chunkOfDay' && path[1] === 'chunk') updateSummaries();
       });
     });
   }
@@ -201,6 +205,55 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryFocus.classList.add('hidden');
         if(btnAddFocus) btnAddFocus.classList.remove('hidden');
         if(btnEditFocus) btnEditFocus.classList.add('hidden');
+      }
+    }
+
+    // Today's Chunk
+    const hasChunk = journalData.chunkOfDay && journalData.chunkOfDay.chunk;
+    if (summaryChunk) {
+      if (hasChunk) {
+        summaryChunk.textContent = journalData.chunkOfDay.chunk;
+        summaryChunk.classList.remove('hidden');
+        if(btnAddChunk) btnAddChunk.classList.add('hidden');
+        if(btnEditChunk) btnEditChunk.classList.remove('hidden');
+      } else {
+        summaryChunk.classList.add('hidden');
+        if(btnAddChunk) btnAddChunk.classList.remove('hidden');
+        if(btnEditChunk) btnEditChunk.classList.add('hidden');
+      }
+    }
+
+    // Today's Plan (From Yesterday's Tomorrow Plan)
+    if (summaryPlan) {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const yYear = yesterday.getFullYear();
+      const yMonth = String(yesterday.getMonth() + 1).padStart(2, '0');
+      const yDay = String(yesterday.getDate()).padStart(2, '0');
+      const yesterdayStr = `${yYear}-${yMonth}-${yDay}`;
+      
+      let foundPlan = null;
+      if (journalData.dailyReportsHistory) {
+        const yesterdaySnapshot = journalData.dailyReportsHistory.find(r => r.date === yesterdayStr);
+        if (yesterdaySnapshot && yesterdaySnapshot.tomorrowPlan) {
+          foundPlan = yesterdaySnapshot.tomorrowPlan;
+        }
+      }
+
+      if (foundPlan && (foundPlan.firstTask || foundPlan.task1 || foundPlan.task2 || foundPlan.task3)) {
+        let html = '<ul style="list-style: none; padding: 0; margin: 0; display:flex; flex-direction:column; gap:4px; color:var(--text-main);">';
+        if (foundPlan.firstTask) html += `<li><input type="checkbox"> <strong>[First Task]</strong> ${foundPlan.firstTask}</li>`;
+        if (foundPlan.task1) html += `<li><input type="checkbox"> ${foundPlan.task1}</li>`;
+        if (foundPlan.task2) html += `<li><input type="checkbox"> ${foundPlan.task2}</li>`;
+        if (foundPlan.task3) html += `<li><input type="checkbox"> ${foundPlan.task3}</li>`;
+        html += '</ul>';
+        summaryPlan.innerHTML = html;
+        summaryPlan.classList.remove('text-muted');
+      } else {
+        summaryPlan.innerHTML = 'No plan was written yesterday.';
+        summaryPlan.classList.add('text-muted');
       }
     }
   }

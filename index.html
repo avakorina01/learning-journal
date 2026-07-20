@@ -86,6 +86,24 @@
               <button class="btn btn-secondary btn-sm mt-2 hidden" id="btn-add-focus">+ Add Focus</button>
             </div>
           </div>
+
+          <div class="dashboard-summaries mb-4">
+            <div class="summary-card">
+              <div class="summary-card-header">
+                <h4>Today's Plan (From Yesterday)</h4>
+              </div>
+              <div id="summary-plan" class="text-muted text-sm mt-1">No plan was written yesterday.</div>
+            </div>
+            
+            <div class="summary-card">
+              <div class="summary-card-header">
+                <h4>Today's Chunk</h4>
+                <button class="btn-text btn-sm btn-edit hidden" id="btn-edit-chunk">Edit</button>
+              </div>
+              <p id="summary-chunk" class="text-muted">No chunk defined for today yet.</p>
+              <button class="btn btn-secondary btn-sm mt-2 hidden" id="btn-add-chunk">+ Add Chunk</button>
+            </div>
+          </div>
           
           <div class="card mb-4">
             <div class="calendar-header">
@@ -249,6 +267,10 @@
                 <input type="checkbox" data-model="tomorrowPlan.writtenBeforeBed"> I wrote this plan before going to bed
               </label>
             </div>
+            
+            <div class="form-actions mt-4">
+              <button id="btn-save-plan" class="btn btn-primary w-100">Save Plan</button>
+            </div>
           </div>
         </section>
 
@@ -361,6 +383,10 @@
                 <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-target=\'anti-procrastination\']').click()">Go to Anti-Procrastination</button>
               </div>
             </div>
+            
+            <div class="form-actions mt-4">
+              <button id="btn-save-chunk" class="btn btn-primary w-100">Save Chunk</button>
+            </div>
           </div>
         </section>
 
@@ -411,6 +437,10 @@
             <div class="form-group">
               <label for="ap-reward">Reward:</label>
               <input type="text" id="ap-reward" data-model="antiProcrastination.reward" placeholder="How will I reward myself after the process?">
+            </div>
+            
+            <div class="form-actions mt-4">
+              <button id="btn-save-procrastination" class="btn btn-primary w-100">Save Plan</button>
             </div>
           </div>
         </section>
