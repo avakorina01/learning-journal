@@ -357,6 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="goal-details">
           ${goal.why ? `<p><strong>Why:</strong> ${goal.why}</p>` : ''}
+          ${goal.how ? `<p><strong>How I'll know I've improved:</strong> ${goal.how}</p>` : ''}
+          ${goal.smallestStep ? `<p><strong>Smallest step:</strong> ${goal.smallestStep}</p>` : ''}
         </div>
         <div class="goal-actions">
           <button class="btn btn-secondary btn-sm action-edit" data-id="${goal.id}"><i class="fa-solid fa-pen"></i> Edit</button>

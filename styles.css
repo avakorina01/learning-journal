@@ -1020,6 +1020,15 @@ input[type="checkbox"], input[type="radio"] {
   margin-bottom: 16px;
 }
 
+.goal-details p {
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.goal-details p:last-child {
+  margin-bottom: 0;
+}
+
 .goal-actions {
   display: flex;
   gap: 8px;
