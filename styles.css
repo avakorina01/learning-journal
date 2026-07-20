@@ -744,3 +744,47 @@ input[type="checkbox"], input[type="radio"] {
   /* Show only checked checkboxes/radios in a cleaner way for print if needed, 
      but standard print styles usually handle them well enough */
 }
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toast {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid var(--accent-color);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  min-width: 250px;
+}
+
+.toast.toast-error {
+  border-left-color: var(--danger-color);
+}
+
+.toast.toast-fade-out {
+  animation: fadeOutRight 0.3s ease forwards;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120%); opacity: 0; }
+}

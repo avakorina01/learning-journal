@@ -66,6 +66,60 @@ document.addEventListener('DOMContentLoaded', () => {
   // Calendar State
   let currentCalDate = new Date();
   
+  // Audio Context for Pomodoro
+  let audioCtx;
+
+  // Toast Function
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+    toast.innerHTML = `
+      <span>${type === 'error' ? '⚠️' : '✅'}</span>
+      <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('toast-fade-out');
+      toast.addEventListener('animationend', () => {
+        toast.remove();
+      });
+    }, 3000);
+  }
+
+  function playBeep() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+    oscillator.stop(audioCtx.currentTime + 0.5);
+  }
+
+  function notifyUser(msg) {
+    playBeep();
+    showToast(msg);
+    if (Notification.permission === "granted") {
+      new Notification("Learning Journal", { body: msg });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification("Learning Journal", { body: msg });
+        }
+      });
+    }
+  }
+  
   // Initialize
   init();
 
@@ -119,11 +173,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // UX Save buttons (they just show an alert and go home, since auto-save handles the data)
+    // UX Save buttons
     const setupUxSave = (btn, msg) => {
       if(btn) {
         btn.addEventListener('click', () => {
-          alert(msg);
+          showToast(msg);
           document.querySelector('.nav-item[data-target="home-dashboard"]').click();
         });
       }
@@ -368,6 +422,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function setupPomodoro() {
     btnPomoStart.addEventListener('click', () => {
       if (!pomoIsRunning) {
+        // Request notification permission on first start
+        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+          Notification.requestPermission();
+        }
+        
         pomoIsRunning = true;
         btnPomoStart.classList.add('hidden');
         btnPomoPause.classList.remove('hidden');
@@ -406,8 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pomoTimeLeft = pomoIsFocus ? 25 * 60 : 5 * 60;
       pomoMode.textContent = pomoIsFocus ? 'Focus Mode' : 'Break Time';
       updatePomodoroDisplay();
-      // Optional: Play a sound here
-      alert(pomoIsFocus ? 'Time to focus!' : 'Time for a break!');
+      notifyUser(pomoIsFocus ? 'Time to focus!' : 'Time for a break!');
     }
   }
 
@@ -424,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const topicVal = document.getElementById('dr-topic').value;
 
       if (!dateVal) {
-        alert('Please enter a date before saving the report.');
+        showToast('Please enter a date before saving the report.', 'error');
         return;
       }
 
@@ -470,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
       calculateStreak();
       renderCalendar(); // Re-render calendar to show new report
       
-      alert('Daily Snapshot saved!');
+      showToast('Daily Snapshot saved!');
       document.querySelector('.nav-item[data-target="home-dashboard"]').click();
     });
 
@@ -509,32 +567,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date();
     today.setHours(0,0,0,0);
     
-    // Check if latest date is today or yesterday
-    const latestDate = new Date(dates[0]);
-    latestDate.setHours(0,0,0,0);
+    // Get weekly study days. If not set, assume everyday is a study day.
+    const studyDays = journalData.weeklyContract?.days || {};
+    const noDaysSelected = Object.keys(studyDays).length === 0 || !Object.values(studyDays).includes(true);
     
-    const diffTime = Math.abs(today - latestDate);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const requiredDaysMap = {
+      1: noDaysSelected || studyDays.mon,
+      2: noDaysSelected || studyDays.tue,
+      3: noDaysSelected || studyDays.wed,
+      4: noDaysSelected || studyDays.thu,
+      5: noDaysSelected || studyDays.fri,
+      6: noDaysSelected || studyDays.sat,
+      0: noDaysSelected || studyDays.sun
+    };
 
-    if (diffDays > 1) {
-      // Streak broken
-      streak = 0;
-    } else {
-      streak = 1;
-      // Count backwards
-      for (let i = 1; i < dates.length; i++) {
-        const d1 = new Date(dates[i-1]);
-        const d2 = new Date(dates[i]);
-        d1.setHours(0,0,0,0);
-        d2.setHours(0,0,0,0);
-        
-        const diff = Math.floor((d1 - d2) / (1000 * 60 * 60 * 24));
-        if (diff === 1) {
-          streak++;
-        } else if (diff > 1) {
-          break; // Gap found
+    let currDate = new Date(today);
+    
+    const formatDate = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
+    
+    // Check if we already have a report for today
+    if (dates.includes(formatDate(currDate))) {
+        streak++;
+    }
+    
+    currDate.setDate(currDate.getDate() - 1); // Move to yesterday
+
+    while(true) {
+        const dateStr = formatDate(currDate);
+        if (dates.includes(dateStr)) {
+            streak++;
+            currDate.setDate(currDate.getDate() - 1);
+        } else {
+            // No report on this day
+            if (requiredDaysMap[currDate.getDay()]) {
+                // It was a required day and we missed it! Streak broken.
+                break;
+            } else {
+                // Not a required day, we can skip it and streak continues.
+                currDate.setDate(currDate.getDate() - 1);
+            }
         }
-      }
+        
+        // Safety break if we went too far back past the first recorded report
+        if (new Date(dates[dates.length - 1]) > currDate) {
+            break;
+        }
     }
 
     streakCounter.textContent = `🔥 ${streak} Day Streak`;
