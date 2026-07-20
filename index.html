@@ -18,7 +18,8 @@
         <button id="mobile-menu-close" class="mobile-menu-close" aria-label="Close menu">&times;</button>
       </div>
       <nav class="nav-menu">
-        <button class="nav-item active" data-target="learning-goal">Learning Goal</button>
+        <button class="nav-item active" data-target="home-dashboard">Home</button>
+        <button class="nav-item" data-target="learning-goal">Learning Goal</button>
         <button class="nav-item" data-target="weekly-contract">Weekly Contract</button>
         <button class="nav-item" data-target="tomorrow-plan">Tomorrow Plan</button>
         <button class="nav-item" data-target="daily-report">Daily Report</button>
@@ -27,13 +28,8 @@
         <button class="nav-item" data-target="course-ideas">Course Ideas</button>
       </nav>
 
-      <!-- Pomodoro & Streak Widgets -->
+      <!-- Pomodoro Widget -->
       <div class="sidebar-widgets">
-        <div class="streak-widget">
-          <span class="streak-icon">🔥</span>
-          <span id="streak-counter">0 Day Streak</span>
-        </div>
-        
         <div class="pomodoro-widget">
           <div class="pomodoro-header">Focus Timer</div>
           <div class="pomodoro-time" id="pomodoro-time">25:00</div>
@@ -61,8 +57,34 @@
 
       <div class="sections-container">
         
+        <!-- 0. Home Dashboard -->
+        <section id="home-dashboard" class="section active">
+          <div class="section-header" style="align-items: flex-start;">
+            <div>
+              <h2>Home Dashboard</h2>
+              <div id="home-streak-counter" class="streak-badge mt-2">🔥 0 Day Streak</div>
+            </div>
+            <button class="btn btn-primary" id="btn-add-report">Add Daily Report</button>
+          </div>
+          
+          <div class="card">
+            <div class="calendar-header">
+              <button class="btn-icon" id="cal-prev">&lt;</button>
+              <h3 id="cal-month-year">Month Year</h3>
+              <button class="btn-icon" id="cal-next">&gt;</button>
+            </div>
+            
+            <div class="calendar-grid-header">
+              <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+              <!-- Calendar days injected via JS -->
+            </div>
+          </div>
+        </section>
+
         <!-- 1. Learning Goal -->
-        <section id="learning-goal" class="section active">
+        <section id="learning-goal" class="section">
           <div class="section-header">
             <h2>Learning Goal</h2>
             <button class="btn btn-text btn-clear-section" data-section="learningGoal">Clear section</button>

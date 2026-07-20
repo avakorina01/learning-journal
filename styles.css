@@ -129,16 +129,16 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
-.streak-widget {
-  display: flex;
+.streak-badge {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
+  padding: 8px 16px;
   background-color: rgba(217, 130, 43, 0.1);
   border-radius: var(--radius-md);
   color: var(--accent-orange);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .pomodoro-widget {
@@ -537,6 +537,68 @@ input[type="checkbox"], input[type="radio"] {
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 4px;
+}
+
+/* Calendar Styles */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 4px 12px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: var(--input-bg);
+  color: var(--text-main);
+}
+
+.calendar-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  background-color: var(--input-bg);
+  color: var(--text-main);
+}
+
+.cal-day.empty {
+  background-color: transparent;
+}
+
+.cal-day.has-report {
+  background-color: rgba(47, 111, 115, 0.15);
+  color: var(--accent-color);
+  font-weight: 700;
+  border: 1px solid rgba(47, 111, 115, 0.3);
 }
 
 /* Responsive */

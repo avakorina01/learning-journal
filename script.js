@@ -10,8 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnClearSections = document.querySelectorAll('.btn-clear-section');
   const btnSaveReport = document.getElementById('btn-save-report');
   const historyContainer = document.getElementById('history-container');
-  const streakCounter = document.getElementById('streak-counter');
+  const streakCounter = document.getElementById('home-streak-counter'); // Moved to Home
+  const btnAddReport = document.getElementById('btn-add-report');
   
+  // Calendar Elements
+  const calMonthYear = document.getElementById('cal-month-year');
+  const calGrid = document.getElementById('calendar-grid');
+  const btnCalPrev = document.getElementById('cal-prev');
+  const btnCalNext = document.getElementById('cal-next');
+
   // Pomodoro Elements
   const pomoTime = document.getElementById('pomodoro-time');
   const pomoMode = document.getElementById('pomodoro-mode');
@@ -36,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let pomoIsFocus = true;
   let pomoIsRunning = false;
 
+  // Calendar State
+  let currentCalDate = new Date();
+  
   // Initialize
   init();
 
@@ -47,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupProcrastinationAlert();
     setupPomodoro();
     setupHistoryAndStreak();
+    setupCalendar();
     populateFormFromData();
   }
 
@@ -79,6 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+
+    // Home Dashboard specific navigation
+    if (btnAddReport) {
+      btnAddReport.addEventListener('click', () => {
+        document.querySelector('.nav-item[data-target="daily-report"]').click();
+      });
+    }
   }
 
   // Data Binding and Storage
@@ -308,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearSpecificSection('dailyReport');
       renderHistory();
       calculateStreak();
+      renderCalendar(); // Re-render calendar to show new report
       alert('Report saved to history!');
     });
 
@@ -405,6 +424,74 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    streakCounter.textContent = `${streak} Day Streak`;
+    streakCounter.textContent = `🔥 ${streak} Day Streak`;
+  }
+
+  // Calendar Logic
+  function setupCalendar() {
+    btnCalPrev.addEventListener('click', () => {
+      currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    btnCalNext.addEventListener('click', () => {
+      currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    if (!calGrid || !calMonthYear) return;
+
+    calGrid.innerHTML = '';
+    
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth(); // 0-indexed
+    
+    // Set Header text
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    calMonthYear.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+    
+    // Get day of week for 1st (0 = Sun, 1 = Mon, etc.)
+    // We want Monday = 0, Sunday = 6
+    let startingDay = firstDayOfMonth.getDay() - 1;
+    if (startingDay < 0) startingDay = 6;
+
+    // Set of dates that have reports
+    const reportDates = new Set();
+    if (journalData.dailyReportsHistory) {
+      journalData.dailyReportsHistory.forEach(r => {
+        if (r.date) reportDates.add(r.date);
+      });
+    }
+
+    // Empty cells for preceding days
+    for (let i = 0; i < startingDay; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'cal-day empty';
+      calGrid.appendChild(emptyCell);
+    }
+
+    // Day cells
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dayCell = document.createElement('div');
+      dayCell.className = 'cal-day';
+      dayCell.textContent = i;
+
+      // Check if this date has a report
+      // Construct date string YYYY-MM-DD
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      if (reportDates.has(dateStr)) {
+        dayCell.classList.add('has-report');
+      }
+
+      calGrid.appendChild(dayCell);
+    }
   }
 });
