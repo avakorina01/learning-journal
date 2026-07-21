@@ -1,3 +1,5 @@
+import { db, auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, doc, getDoc, setDoc } from "./firebase-config.js";
+
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const sidebar = document.getElementById('sidebar');
@@ -61,11 +63,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // Data model binding elements
   const dataElements = document.querySelectorAll('[data-model]');
 
+  // Auth Elements
+  const modalAuth = document.getElementById('modal-auth');
+  const btnCloseAuth = document.getElementById('btn-close-auth');
+  const btnGoogleLogin = document.getElementById('btn-google-login');
+  const btnEmailLogin = document.getElementById('btn-email-login');
+  const btnEmailSignup = document.getElementById('btn-email-signup');
+  const authEmailInput = document.getElementById('auth-email');
+  const authPasswordInput = document.getElementById('auth-password');
+  const authError = document.getElementById('auth-error');
+  const userInfoDiv = document.getElementById('user-info');
+  const userEmailSpan = document.getElementById('user-email');
+  const btnLogout = document.getElementById('btn-logout');
+  const btnLoginSidebar = document.getElementById('btn-login-sidebar');
+  const syncStatus = document.getElementById('sync-status');
+
   // Storage Key
   const STORAGE_KEY = 'learningJournalData';
 
   // State
-  let journalData = loadData();
+  let journalData = {};
+  let currentUser = null;
+  let syncTimeout = null;
 
   // Pomodoro State
   let pomoTimer = null;
@@ -136,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
   init();
 
   function init() {
-    migrateGoalsData();
     setupNavigation();
     setupModals();
     setupGoalsManager();
@@ -145,12 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupClearButtons();
     setupPrintButton();
     setupPomodoro();
-    setupHistoryAndStreak();
-    setupCalendar();
-    populateFormFromData();
-    renderGoalsList();
-    updateSummaries();
-    setupTodaysPlan();
+    setupCalendarEvents();
+    bindTodaysPlanEvents();
+    
+    // Auth handles the rest of the flow
+    setupAuth();
   }
   
   function migrateGoalsData() {
@@ -602,11 +619,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Today's Plan Logic
-  function setupTodaysPlan() {
-    const listContainer = document.getElementById('todays-plan-list');
+  function bindTodaysPlanEvents() {
     const inputTask = document.getElementById('new-task-input');
     const btnAddTask = document.getElementById('btn-add-task');
     
+    if (!btnAddTask) return;
+
+    btnAddTask.addEventListener('click', () => {
+      const text = inputTask.value.trim();
+      if (text) {
+        journalData.todaysPlan.tasks.push({ id: Date.now(), text, done: false });
+        saveData();
+        inputTask.value = '';
+        renderTodaysPlan();
+      }
+    });
+
+    inputTask.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        btnAddTask.click();
+      }
+    });
+  }
+
+  function processTodaysPlan() {
+    const listContainer = document.getElementById('todays-plan-list');
     if (!listContainer) return;
 
     const today = new Date();
@@ -648,22 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderTodaysPlan();
-
-    btnAddTask.addEventListener('click', () => {
-      const text = inputTask.value.trim();
-      if (text) {
-        journalData.todaysPlan.tasks.push({ id: Date.now(), text, done: false });
-        saveData();
-        inputTask.value = '';
-        renderTodaysPlan();
-      }
-    });
-
-    inputTask.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        btnAddTask.click();
-      }
-    });
   }
 
   function renderTodaysPlan() {
@@ -742,13 +763,121 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function loadData() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : {};
+  async function loadData() {
+    let saved = localStorage.getItem(STORAGE_KEY);
+    journalData = saved ? JSON.parse(saved) : {};
+
+    if (currentUser) {
+      setSyncStatus('syncing');
+      try {
+        const docRef = doc(db, "users", currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          journalData = docSnap.data();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(journalData));
+        }
+        setSyncStatus('synced');
+      } catch (error) {
+        console.error("Error loading document:", error);
+        setSyncStatus('');
+      }
+    }
+
+    // Refresh UI based on loaded data
+    migrateGoalsData();
+    populateFormFromData();
+    renderGoalsList();
+    updateSummaries();
+    processTodaysPlan();
+    setupHistoryAndStreak();
+    renderCalendar();
   }
 
   function saveData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(journalData));
+    
+    if (currentUser) {
+      setSyncStatus('syncing');
+      if (syncTimeout) clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(async () => {
+        try {
+          await setDoc(doc(db, "users", currentUser.uid), journalData, { merge: true });
+          setSyncStatus('synced');
+        } catch (error) {
+          console.error("Error saving document:", error);
+          setSyncStatus('');
+        }
+      }, 1000); // 1s debounce
+    }
+  }
+
+  function setSyncStatus(status) {
+    if (!syncStatus) return;
+    syncStatus.className = 'sync-status';
+    if (status) syncStatus.classList.add(status);
+  }
+
+  function showAuthError(msg) {
+    if(authError) {
+      authError.textContent = msg;
+      authError.classList.remove('hidden');
+    }
+  }
+
+  function setupAuth() {
+    if (btnLoginSidebar) btnLoginSidebar.addEventListener('click', () => modalAuth.classList.remove('hidden'));
+    if (btnCloseAuth) btnCloseAuth.addEventListener('click', () => modalAuth.classList.add('hidden'));
+    
+    if (btnLogout) btnLogout.addEventListener('click', () => {
+      signOut(auth).then(() => showToast('Signed out successfully.'));
+    });
+
+    if (btnGoogleLogin) {
+      btnGoogleLogin.addEventListener('click', () => {
+        authError.classList.add('hidden');
+        signInWithPopup(auth, googleProvider)
+          .then(() => modalAuth.classList.add('hidden'))
+          .catch((error) => showAuthError(error.message));
+      });
+    }
+    
+    if (btnEmailLogin) {
+      btnEmailLogin.addEventListener('click', () => {
+        const email = authEmailInput.value;
+        const password = authPasswordInput.value;
+        if (!email || !password) return showAuthError("Email and password required.");
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => modalAuth.classList.add('hidden'))
+          .catch(error => showAuthError(error.message));
+      });
+    }
+
+    if (btnEmailSignup) {
+      btnEmailSignup.addEventListener('click', () => {
+        const email = authEmailInput.value;
+        const password = authPasswordInput.value;
+        if (!email || !password) return showAuthError("Email and password required.");
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(() => modalAuth.classList.add('hidden'))
+          .catch(error => showAuthError(error.message));
+      });
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        if (userInfoDiv) userInfoDiv.classList.remove('hidden');
+        if (btnLoginSidebar) btnLoginSidebar.classList.add('hidden');
+        if (userEmailSpan) userEmailSpan.textContent = user.email;
+        loadData(); // Load cloud data and update UI
+      } else {
+        currentUser = null;
+        if (userInfoDiv) userInfoDiv.classList.add('hidden');
+        if (btnLoginSidebar) btnLoginSidebar.classList.remove('hidden');
+        setSyncStatus('');
+        loadData(); // Load local data and update UI
+      }
+    });
   }
 
   // Clear functionality
@@ -934,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Calendar Logic
-  function setupCalendar() {
+  function setupCalendarEvents() {
     btnCalPrev.addEventListener('click', () => {
       currentCalDate.setMonth(currentCalDate.getMonth() - 1);
       renderCalendar();
@@ -944,8 +1073,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentCalDate.setMonth(currentCalDate.getMonth() + 1);
       renderCalendar();
     });
-
-    renderCalendar();
   }
 
   function renderCalendar() {

@@ -36,4 +36,4 @@ Open `index.html` in a browser.
 
 ## Live Demo
 
-*You can deploy this to GitHub Pages to get a live URL and update this section.*
+[https://your-learning-journal.web.app/](https://your-learning-journal.web.app/)

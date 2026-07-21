@@ -16,6 +16,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h1>Learning Journal</h1>
+        <div id="sync-status" class="sync-status" title="Sync Status"><i class="fa-solid fa-cloud-arrow-up"></i></div>
         <button id="mobile-menu-close" class="mobile-menu-close" aria-label="Close menu">&times;</button>
       </div>
       <nav class="nav-menu">
@@ -40,8 +41,13 @@
       </div>
 
       <div class="sidebar-footer">
+        <div id="user-info" class="user-info hidden">
+          <span id="user-email" class="text-sm text-muted mb-2" style="display:block;word-break:break-all;"></span>
+          <button id="btn-logout" class="btn btn-secondary w-100 mb-2"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+        </div>
+        <button id="btn-login-sidebar" class="btn btn-primary w-100 mb-2"><i class="fa-solid fa-user"></i> Sign In</button>
         <button id="btn-print" class="btn btn-secondary"><i class="fa-solid fa-print"></i> Print / PDF</button>
-        <button id="btn-clear-all" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Clear All Data</button>
+        <button id="btn-clear-all" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Clear Local Data</button>
       </div>
     </aside>
 
@@ -216,6 +222,48 @@
   </div>
 
   <!-- MODALS -->
+
+  <!-- Modal: Auth -->
+  <div class="modal-overlay hidden" id="modal-auth">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2><i class="fa-solid fa-user-lock"></i> Sign In</h2>
+        <button class="btn-close-modal" id="btn-close-auth">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="instruction-text mb-4">Sign in to sync your journal across devices.</p>
+        
+        <button id="btn-google-login" class="btn w-100 mb-3" style="background-color: #fff; color: #757575; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" style="width: 18px; height: 18px;">
+          Sign in with Google
+        </button>
+        
+        <div style="display: flex; align-items: center; margin: 20px 0;">
+          <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+          <span style="padding: 0 10px; color: var(--text-secondary); font-size: 0.85rem;">OR</span>
+          <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+        </div>
+
+        <form id="email-auth-form">
+          <div class="form-group" style="text-align: left;">
+            <label for="auth-email">Email</label>
+            <input type="email" id="auth-email" required placeholder="you@example.com">
+          </div>
+          <div class="form-group" style="text-align: left;">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" required placeholder="••••••••">
+          </div>
+          
+          <div id="auth-error" class="text-sm mt-2 mb-3 hidden" style="color: var(--danger-color); text-align: left;"></div>
+
+          <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-email-login" class="btn btn-primary flex-1">Login</button>
+            <button type="button" id="btn-email-signup" class="btn btn-secondary flex-1">Sign Up</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: Learning Goal -->
   <div class="modal-overlay hidden" id="modal-goal">
@@ -415,6 +463,6 @@
   </div>
 
   <div id="toast-container" class="toast-container"></div>
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
